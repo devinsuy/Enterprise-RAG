@@ -25,6 +25,9 @@ def save_content(url, content, output_dir='output'):
     with open(filepath, 'w', encoding='utf-8') as file:
         file.write(content)
 
+
+# We inject cookes to maintain auth as if we were actually logged in
+# Replicates the web browser session state to simulate navigating between pages
 def add_cookies(context, cookies):
     for cookie in cookies:
         same_site = cookie.get('sameSite', 'Lax')
@@ -41,6 +44,10 @@ def add_cookies(context, cookies):
             'expires': cookie.get('expirationDate', -1)
         }])
 
+# Scrape an individual page
+# "page" is webbrowser context
+# We need to simulate webbrowser to get the full page content 
+# since it simulates the javascript rendered HTML from we wouldn't otherwise get
 def scrape_page(page, url):
     page.goto(url)
     page.wait_for_load_state('networkidle')
@@ -53,17 +60,6 @@ def scrape_page(page, url):
 
     return text
 
-# Scrape an individual page
-# "page" is webbrowser context
-# We need to simulate webbrowser to get the full page content 
-# since it simulates the javascript rendered HTML from we wouldn't otherwise get
-def scrape_page(page, url):
-    page.goto(url)
-    page.wait_for_load_state('networkidle')
-    page_content = page.content()
-    soup = BeautifulSoup(page_content, 'html.parser')
-    text = ' '.join(soup.stripped_strings)
-    return text
 
 # Instruments the mocked browser context using webdriver for scraping each page
 # Starts from a base_url and expands scraping to accessible links from the page
@@ -146,3 +142,29 @@ if __name__ == "__main__":
         "https://ischoolonline.berkeley.edu/contact-us"
     ]
     scrape_urls(additional_urls)
+
+    # Scrape couse catalog
+    course_urls = [
+        "https://www.ischool.berkeley.edu/courses/datasci",
+        "https://www.ischool.berkeley.edu/courses/datasci/200",
+        "https://www.ischool.berkeley.edu/courses/datasci/201",
+        "https://www.ischool.berkeley.edu/courses/datasci/203",
+        "https://www.ischool.berkeley.edu/courses/datasci/205",
+        "https://www.ischool.berkeley.edu/courses/datasci/207",
+        "https://www.ischool.berkeley.edu/courses/datasci/209",
+        "https://www.ischool.berkeley.edu/courses/datasci/210",
+        "https://www.ischool.berkeley.edu/courses/datasci/210a",
+        "https://www.ischool.berkeley.edu/courses/datasci/221",
+        "https://www.ischool.berkeley.edu/courses/datasci/231",
+        "https://www.ischool.berkeley.edu/courses/datasci/233",
+        "https://www.ischool.berkeley.edu/courses/datasci/241",
+        "https://www.ischool.berkeley.edu/courses/datasci/255",
+        "https://www.ischool.berkeley.edu/courses/datasci/261",
+        "https://www.ischool.berkeley.edu/courses/datasci/266",
+        "https://www.ischool.berkeley.edu/courses/datasci/271",
+        "https://www.ischool.berkeley.edu/courses/datasci/281",
+        "https://www.ischool.berkeley.edu/courses/datasci/290",
+        "https://www.ischool.berkeley.edu/courses/datasci/293",
+    ]
+    scrape_urls(course_urls)
+
