@@ -1,0 +1,339 @@
+
+What is Data Science? | The Data Science Career Path
+
+Skip to main
+
+Menu 
+
+Apply Now
+External link:
+open_in_new
+
+Cybersecurity
+
+expand_more
+
+Curriculum
+
+expand_more
+
+Certificate in Applied Data Science
+ 
+What is Cybersecurity?
+ 
+MICS Class Profile
+ 
+Data Science
+
+expand_more
+
+Curriculum
+ 
+What Is Data Science?
+ 
+Careers in Data Science
+ 
+MIDS Class Profile
+ 
+Study Applied Statistics
+ 
+Admissions
+
+expand_more
+
+International Admissions
+ 
+Tuition and Financial Aid
+
+expand_more
+
+Fellowships
+ 
+Events
+ 
+Experience
+
+expand_more
+
+Faculty
+ 
+Student Profiles
+ 
+Alumni Profiles
+ 
+Video Library
+ 
+Apply Now
+External link:
+open_in_new
+ 
+Home
+ / 
+Data Science
+ / 
+What Is Data Science?
+ 
+Data Science
+Curriculum
+
+What Is Data Science?
+
+Careers in Data Science
+
+Study Applied Statistics
+
+MIDS Class Profile
+
+What is Data Science?
+
+Data science continues to evolve as one of the most promising and in-demand career paths for skilled professionals. Today, successful data professionals understand they must advance past the traditional skills of analyzing large amounts of data, data mining, and programming skills. To uncover useful intelligence for their organizations, data scientists must master the full spectrum of the data science life cycle and possess a level of flexibility and understanding to maximize returns at each phase of the process.
+
+The Data Science Life Cycle
+
+The image represents the five stages of the data science life cycle: 
+Capture
+, (data acquisition, data entry, signal reception, data extraction); 
+Maintain
+ (data warehousing, data cleansing, data staging, data processing, data architecture); 
+Process
+ (data mining, clustering/classification, data modeling, data summarization); 
+Analyze
+ (exploratory/confirmatory, predictive analysis, regression, text mining, qualitative analysis); 
+Communicate
+ (data reporting, data visualization, business intelligence, decision making).
+
+The term “data scientist” was coined when companies first realized the need for data professionals skilled in organizing and analyzing massive amounts of data. Ten years after the widespread business adoption of the internet, Hal Varian, Google’s chief economist, first dean of the UC Berkeley School of Information (I School), and UC Berkeley emeritus professor of information sciences, business, and economics, predicted the importance of adapting to technology’s influence and reconfiguration of different industries.
+
+“The ability to take data — to be able to understand it, to process it, to extract value from it, to visualize it, to communicate it — that’s going to be a hugely important skill in the next decades.”
+
+– Hal Varian, chief economist at Google and UC Berkeley professor of information sciences, business, and economics
+1
+
+Today, effective data scientists masterfully identify relevant questions, collect data from a multitude of different data sources, organize the information, translate results into solutions, and communicate their findings in a way that positively affects business decisions. These skills are now required in almost all industries, which means data scientists have become increasingly valuable to companies.
+
+Develop Specialized Data Science Skills Online
+
+Get your master’s in information and data science and earn a certificate
+from the UC Berkeley School of Information (I School).
+
+			Learn About Our Online Graduate Programs			
+ 
+What Does a Data Scientist Do?
+
+Data scientists have become assets across the globe and are present in almost all organizations. These professionals are well-rounded, analytical individuals with high-level technical skills who can build complex quantitative algorithms to organize and synthesize large amounts of information used to answer questions and drive strategy in their organizations. They also have the communication and leadership experience to deliver tangible results to various stakeholders across an organization or business.
+
+Data scientists are typically curious and result-oriented, with exceptional industry-specific knowledge and communication skills that allow them to explain highly technical results to their non-technical counterparts. They possess a strong quantitative background in statistics and linear algebra as well as programming knowledge with focuses in data warehousing, mining, and modeling to build and analyze algorithms.
+
+They also use key technical tools and skills, including:
+
+R
+
+Python
+
+Apache Hadoop
+
+MapReduce
+
+Apache Spark
+
+NoSQL databases
+
+Cloud computing
+
+D3
+
+Apache Pig
+
+Tableau
+
+iPython notebooks
+
+GitHub
+
+Why Become a Data Scientist?
+
+As increasing amounts of data become more accessible, large tech companies are no longer the only ones in need of data scientists. There’s now a demand for qualified data science professionals across organizations, big and small.
+
+With the power to shape decisions, solve real-world challenges, and make a meaningful impact in diverse sectors, data science professionals have the opportunity to pursue various career paths.
+
+Versatile
+
+Choose the industry you want to work in
+
+Remote Options
+
+Work from the comfort of your home
+
+Ever-Evolving
+
+Gain new skills as data uses continue to grow
+
+			Request Information			
+ 
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+Where Do You Fit in Data Science?
+
+Data is everywhere and expansive. Various terms related to mining, cleaning, analyzing, and interpreting data are often used interchangeably, but the roles typically involve different skill sets. The complexity of the data analyzed also differs.
+
+Data Scientist
+
+Data scientists examine which questions need answering and where to find the related data. They have business acumen and analytical skills as well as the ability to mine, clean, and present data. Businesses use data scientists to source, manage, and analyze large amounts of unstructured data. Data scientists also leverage machine learning techniques to model information and interpret results effectively, a skill that differentiates them from data analysts. Results are then synthesized and communicated to key stakeholders to drive strategic decision making in the organization.
+
+Skills needed: 
+Programming skills (SAS, R, Python), statistical and mathematical skills, storytelling and data visualization, Hadoop, SQL, machine learning
+
+Data Analyst
+
+Data analysts bridge the gap between data scientists and business analysts. They’re provided with the questions that need answering from an organization and then organize and analyze data to find results that align with high-level business strategy. Data analysts are responsible for translating technical analysis to qualitative action items and effectively communicating their findings to diverse stakeholders.
+
+Skills needed: 
+Programming skills (SAS, R, Python), statistical and mathematical skills, data wrangling, data visualization
+
+Data Engineer
+
+Data engineers manage exponentially growing and rapidly changing data. They focus on developing, deploying, managing, and optimizing data pipelines and infrastructure to transform and transfer data to data scientists and data analysts for querying.
+
+Skills needed: 
+Programming languages (Java, Scala), NoSQL databases (MongoDB, Cassandra DB), frameworks (Apache Hadoop)
+
+Data Science Career Outlook and Salary Opportunities
+
+Data science professionals are rewarded for their highly technical skill set with competitive salaries and great job opportunities at big and small companies in most industries. Data science professionals with the appropriate experience and education have the opportunity to make their mark in some of the most forward-thinking companies in the world.
+
+Gaining specialized skills within the data science field can distinguish data scientists even further. For example, machine learning experts use high-level programming skills to create algorithms that continuously gather data and adjust their learning to improve prediction performance.
+
+			Request More Information			
+
+Learn how a Master of Information and Data Science from UC Berkeley can prepare you for a successful career in data science.
+
+		Next Step	
+
+1
+Hal Varian on How the Web Challenges Managers
+External link:
+open_in_new
+. (2009). 
+Mckinsey
+. Retrieved December 2023.
+arrow_upward
+
+	REQUEST 
+INFO
+ 
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+Cybersecurity
+
+Data Science
+
+Admissions
+
+Experience
+
+Blog
+
+Contact Us
+
+2U, Our Program Partner
+
+Legal
+
+Privacy Policy
+
+Cookie Policy
+
+Your Privacy Choices
+
+Terms of Use
+
+Sitemap
+
+COVID-19 Resources
+
+© 2024 UC Berkeley School of Information
+
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+Your Opt Out Preference Signal is Honored
+PRIVACY PREFERENCE CENTER
+When you visit our website, we store cookies on your browser to collect information. The information collected might relate to you, your preferences, or your device, and is mostly used to make the site work as you expect it to and to provide a more personalized web experience. However, you can choose not to allow certain types of cookies, which may impact your experience of the site and the services we are able to offer. Click on the different category headings to find out more and change our default settings according to your preference. You cannot opt-out of Strictly Necessary Cookies, as they are deployed in order to ensure the proper functioning of our website. View our Cookie Policy by clicking the link below.
+DO NOT SELL OR SHARE MY PERSONAL INFORMATION
+To opt out of sale or sharing of your personal information for targeted advertising, turn off the toggle in the Ad Targeting Cookies / Share or Sale of Personal Personal Information category below by swiping to it to the left (gray). Your selection is saved to this browser on this device. If you clear your browser cookies, you will need to opt out again. To learn more about 2U’s use of your data, please see our Privacy Policy, available at the link below.
+            
+View Our Cookie Policy
+View Our Privacy Policy
+Allow All
+ Manage Consent Preferences
+Strictly Necessary Cookies
+Always Active
+These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms.    You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information.
+Functional Cookies
+ 
+Functional Cookies
+ 
+These cookies enable the website to provide enhanced functionality and personalisation, including in searches. They may be set by us or by third party providers whose services we have added to our pages. If you do not allow these cookies then some or all of these services may not function properly.
+Performance Cookies
+ 
+Performance Cookies
+ 
+These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site.    All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.
+Ad Targeting Cookies/Share or Sale of Personal Information
+ 
+Ad Targeting Cookies/Share or Sale of Personal Information
+ 
+We disclose information to advertising partners to deliver ads that are more relevant to you, which may be considered a “sale” or a “sharing” of information for targeted advertising under certain laws. To opt out of “sales,” “sharing,” and targeting advertising, you may turn off the toggle by swiping it to the left (gray). This will also opt you out of all targeting cookies.
+Targeting Cookies
+ 
+Switch Label
+ 
+These cookies are set by our advertising partners to provide behavioral advertising and re-marketing analytical data. They collect any type of browsing information necessary to create profiles and to understand user habits in order to develop an individual and specific advertising routine. The profile created regarding your browsing interest and behavior is used to customize the ads you see when you access other websites.
+Back Button
+Cookie List
+ 
+Search Icon
+Filter Icon
+Clear
+ 
+checkbox label
+ 
+label
+Apply
+ 
+Cancel
+Consent
+ 
+Leg.Interest
+ 
+checkbox label
+ 
+label
+ 
+checkbox label
+ 
+label
+ 
+checkbox label
+ 
+label
+ 
+Confirm My Choices
+

@@ -1,0 +1,372 @@
+
+Information Sciences Admissions | UC Berkeley Online
+
+Skip to main
+
+Menu 
+
+Apply Now
+External link:
+open_in_new
+
+Cybersecurity
+
+expand_more
+
+Curriculum
+
+expand_more
+
+Certificate in Applied Data Science
+ 
+What is Cybersecurity?
+ 
+MICS Class Profile
+ 
+Data Science
+
+expand_more
+
+Curriculum
+ 
+What Is Data Science?
+ 
+Careers in Data Science
+ 
+MIDS Class Profile
+ 
+Study Applied Statistics
+ 
+Admissions
+
+expand_more
+
+International Admissions
+ 
+Tuition and Financial Aid
+
+expand_more
+
+Fellowships
+ 
+Events
+ 
+Experience
+
+expand_more
+
+Faculty
+ 
+Student Profiles
+ 
+Alumni Profiles
+ 
+Video Library
+ 
+Apply Now
+External link:
+open_in_new
+ 
+Home
+ / 
+Admissions
+ 
+Admissions
+International Admissions
+
+Tuition and Financial Aid
+
+Fellowships
+
+Events
+
+Admissions Overview
+
+The UC Berkeley School of Information’s online master’s programs offer three start dates throughout the year (January, May and September). Applications are reviewed as they are received, so you are encouraged to submit your completed application as soon as possible. Admissions decisions are made on a rolling basis.
+
+Start Dates
+
+January
+
+May
+
+September
+
+Application Deadlines
+
+January 2025
+
+Deadline
+Date
+Early Action Deadline
+TBD
+Priority Application Deadline
+September 4, 2024
+Final Application Deadline
+September 25, 2024
+Classes Start
+January 2025
+
+			Apply Now			
+ 
+External link:
+open_in_new
+
+Application Requirements
+
+To complete your application, you must submit the following:
+
+Online application
+Transcripts from all educational institutions attended
+Statement of Purpose and additional admissions statements
+Two professional letters of recommendation
+Current resume
+TOEFL Scores (if applicable)
+Application fee of $135 for domestic applicants or $155 for international applicants
+GRE or GMAT scores (optional)
+
+Admissions Requirements
+
+Applications are evaluated holistically on a combination of prior academic performance, work experience, essays, letters of recommendation, and goals that are a good fit for the program. The UC Berkeley School of Information seeks students with the academic abilities to meet the demands of a rigorous graduate program. To be eligible for the online master’s programs, you must meet the following requirements:
+
+A bachelor’s degree
+
+You should have a superior scholastic record — normally well above a 3.0 GPA. The recognized equivalent to a bachelor’s degree is also accepted, if earned from an accredited institution.
+
+Many schools issue transcripts electronically, either through their own web services or through vendors. If this option is available through the institutions you attended, please specify that your transcript(s) be sent to the address below as this will expedite the delivery of your transcript(s) and the completion of your application.
+
+Cybersecurity (MICS): appsvcs@cybersecurity.berkeley.edu
+Data Science (MIDS): applicationservices@datascience.berkeley.edu
+
+Please do not send physical documents. Documents mailed to us will NOT be returned. If the institution you attended does not issue transcripts electronically, please contact your admissions counselor.
+
+A high level of quantitative ability
+
+This should be demonstrated by at least one of the following qualifications:
+
+Work experience that demonstrates your quantitative abilities
+Academic coursework that demonstrates quantitative aptitude
+
+A problem-solving mindset
+
+A high level of analytical reasoning ability and a problem-solving mindset as demonstrated in academic and/or professional performance.
+
+A working knowledge of fundamental concepts
+
+For the MIDS program, this includes knowledge of data structures, algorithms and analysis of algorithms, and linear algebra. Applicants who lack this experience in their academic or work background but meet all other requirements for admission will be asked to complete a 
+bridge course
+ before enrolling in the Applied Machine Learning course.
+
+For the MICS program, this includes an understanding of – or, a proven aptitude for and commitment to learning – data structures and discrete mathematics which can be demonstrated by at least one of the following qualifications:
+
+Completed coursework in data structures and discrete mathematics.
+Work experience that demonstrates understanding of data structures and discrete mathematics.
+Proven technical aptitude, demonstrated by high level technical work experience or academic coursework.
+Proven commitment to learning concepts, demonstrated by 
+review of MICS self-assessment and preparatory resources
+, and clear indication in application of progress made towards gaining this foundational knowledge.
+
+The ability to communicate effectively
+
+This should be demonstrated by at least one of the following qualifications:
+
+Academic performance
+Professional experience
+Strong essays that demonstrate effective communication skills
+
+Programming proficiency
+
+MIDS: Proficiency in programming languages, such as Python or Java, should be demonstrated by prior work experience or advanced coursework. Applicants who lack this experience in their academic or work background are encouraged to take the 
+Introduction to Data Science Programming course
+ in their first term. Students who feel they have sufficient knowledge may take the waiver exam to waive this course. 
+
+MICS: Knowledge of at least one, and ideally two, programming languages, such as C, C++, Python, Java, Javascript, or machine/assembly language as demonstrated by work experience or coursework. Applicants who lack this experience in their academic or work background are encouraged to take the 
+Programming Fundamentals for Cybersecurity course
+ in their first term. Students may opt-in or out of this course.
+
+Test scores
+
+A 
+Test of English as a Foreign Language (TOEFL)
+External link:
+open_in_new
+ or 
+International English Language Testing System Academic (IELTS)
+External link:
+open_in_new
+ score is required for some applicants. To qualify for a TOEFL/IELTS exemption, you must fulfill one of the following criteria: 
+
+Have a basic degree from a recognized institution in a country where the official language is English.
+Have completed a basic or advanced degree at an institution in the United States or a United States institution abroad, where the language of instruction is English, and the institution is accredited by one of the United States regional accrediting agencies.
+Have completed at least one year of full-time academic coursework with grades of B or better at a regionally accredited institution within the United States.
+
+If you do not meet the exemption criteria mentioned above, you are required to submit a TOEFL or IELTS score. 
+
+If you have any questions about this requirement, please get in touch with us.
+
+Not required: 
+As of Fall 2020, we have eliminated the GRE/GMAT requirement. We recommend you put your time and effort towards the required application materials. 
+Read more about our decision to drop the GRE/GMAT requirement
+External link:
+open_in_new
+.
+
+Test Codes
+
+Test
+Code/Dept
+Valid For
+GRE
+1634/0404
+5 years
+GMAT
+N2V-Q0-28
+5 years
+TOEFL
+4833/99
+18 months
+IELTS
+TRF
+1
+18 months
+
+1
+Test Report Form must be sent directly from IELTS 
+arrow_upward
+Return to footnote reference
+
+Frequently Asked Questions
+
+For any questions, 
+please download and read our FAQ (PDF, 218kb)
+External link:
+open_in_new
+.
+
+Get Started
+
+Contact an Admissions Counselor today with any questions, or fill out a brief form to request more information.
+
+			Request Information			
+ 
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+	REQUEST 
+INFO
+ 
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+Cybersecurity
+
+Data Science
+
+Admissions
+
+Experience
+
+Blog
+
+Contact Us
+
+2U, Our Program Partner
+
+Legal
+
+Privacy Policy
+
+Cookie Policy
+
+Your Privacy Choices
+
+Terms of Use
+
+Sitemap
+
+COVID-19 Resources
+
+© 2024 UC Berkeley School of Information
+
+close
+
+Close Modal
+
+					Request More Information					
+
+					Next Step
+					
+Your Opt Out Preference Signal is Honored
+PRIVACY PREFERENCE CENTER
+When you visit our website, we store cookies on your browser to collect information. The information collected might relate to you, your preferences, or your device, and is mostly used to make the site work as you expect it to and to provide a more personalized web experience. However, you can choose not to allow certain types of cookies, which may impact your experience of the site and the services we are able to offer. Click on the different category headings to find out more and change our default settings according to your preference. You cannot opt-out of Strictly Necessary Cookies, as they are deployed in order to ensure the proper functioning of our website. View our Cookie Policy by clicking the link below.
+DO NOT SELL OR SHARE MY PERSONAL INFORMATION
+To opt out of sale or sharing of your personal information for targeted advertising, turn off the toggle in the Ad Targeting Cookies / Share or Sale of Personal Personal Information category below by swiping to it to the left (gray). Your selection is saved to this browser on this device. If you clear your browser cookies, you will need to opt out again. To learn more about 2U’s use of your data, please see our Privacy Policy, available at the link below.
+            
+View Our Cookie Policy
+View Our Privacy Policy
+Allow All
+ Manage Consent Preferences
+Strictly Necessary Cookies
+Always Active
+These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms.    You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information.
+Functional Cookies
+ 
+Functional Cookies
+ 
+These cookies enable the website to provide enhanced functionality and personalisation, including in searches. They may be set by us or by third party providers whose services we have added to our pages. If you do not allow these cookies then some or all of these services may not function properly.
+Performance Cookies
+ 
+Performance Cookies
+ 
+These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site.    All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.
+Ad Targeting Cookies/Share or Sale of Personal Information
+ 
+Ad Targeting Cookies/Share or Sale of Personal Information
+ 
+We disclose information to advertising partners to deliver ads that are more relevant to you, which may be considered a “sale” or a “sharing” of information for targeted advertising under certain laws. To opt out of “sales,” “sharing,” and targeting advertising, you may turn off the toggle by swiping it to the left (gray). This will also opt you out of all targeting cookies.
+Targeting Cookies
+ 
+Switch Label
+ 
+These cookies are set by our advertising partners to provide behavioral advertising and re-marketing analytical data. They collect any type of browsing information necessary to create profiles and to understand user habits in order to develop an individual and specific advertising routine. The profile created regarding your browsing interest and behavior is used to customize the ads you see when you access other websites.
+Back Button
+Cookie List
+ 
+Search Icon
+Filter Icon
+Clear
+ 
+checkbox label
+ 
+label
+Apply
+ 
+Cancel
+Consent
+ 
+Leg.Interest
+ 
+checkbox label
+ 
+label
+ 
+checkbox label
+ 
+label
+ 
+checkbox label
+ 
+label
+ 
+Confirm My Choices
+
