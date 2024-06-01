@@ -165,6 +165,8 @@ if __name__ == "__main__":
         "https://www.ischool.berkeley.edu/courses/datasci/281",
         "https://www.ischool.berkeley.edu/courses/datasci/290",
         "https://www.ischool.berkeley.edu/courses/datasci/293",
+        "https://www.ischool.berkeley.edu/courses/mids1a",
+        "https://www.ischool.berkeley.edu/courses/mids1b"
     ]
     scrape_urls(course_urls)
 
