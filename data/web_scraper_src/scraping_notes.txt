@@ -1,0 +1,32 @@
+
+1. Find the best url to start from to recursively expand out to
+	- EX: catalog.csulb.edu
+
+2. It should have info:
+	- Programs / degrees available
+	- Overview of courses
+	- Degree requirements
+
+3. Determine what type of urls to skip:
+	- We (probably) shouldnt expand courses
+
+		- Leads to WAY too much data
+
+		- Takes forever
+
+		- Probably wont even fit in out system
+
+	- EX: Specifically had to a look for a span that said [ARCHIVED CATALOG] and skipped these
+		- Couldn't tell from the url so still have to expand
+
+	- EX: did not expand urls with /preview_course in
+
+	- EX: Skipped expansion of fragment identifiers, doesn't seem to generate new content, takes forever
+		- catalog.csulb.edu/content.php
+		- catalog.csulb.edu/content.php#some-resource
+		- catalog.csulb.edu/content.php/#another-resource
+
+
+4. Watch the output in browser to see if there are other things we should skip/avoid scraping
+
+5. Run the script to clean the whitespace up

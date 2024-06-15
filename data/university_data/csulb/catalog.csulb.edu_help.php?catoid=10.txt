@@ -1,0 +1,149 @@
+
+Online Help - California State University, Long Beach - Modern Campus Catalog™
+
+Skip to Content
+
+Modern Campus Catalog™ Online Help
+
+Close Window
+ 
+This document contains help on the following topics:
+
+Selecting a Different Catalog
+
+Searching the Catalog
+
+Search Options
+
+Browsing the Catalog
+
+Printing Pages of the Catalog
+
+For additional help, please contact 
+CSULB Curriculum Support
+.
+
+ 1. Selecting a Different Catalog
+
+BACK TO TOP
+
+There may be more than one catalog available from the
+		California State University, Long Beach		system e-catalog Gateway at a time.
+		If there is more than one, you will see a dropdown box toward the top of the page with the name
+		of the current catalog. Clicking the dropdown box provides
+		access to other available catalogs. Selecting an alternate
+		catalog will load it into the Gateway.
+		If you do not see the dropdown box, then only a single catalog		is currently published.
+
+ 2. Searching the Catalog
+
+BACK TO TOP
+
+The 
+Catalog Search
+ (shown at the top of the navigation) allows quick retrieval of catalog content that matches your interests.
+
+To use the 
+Catalog Search
+, simply enter a search keyword or phrase and press ENTER. The search will find any matching content in the catalog including courses, programs, school/colleges, departments or other narrative content.
+
+ 2.1. Search Options 
+
+BACK TO TOP
+
+Search options are available by clicking on the 
+Advanced Search
+ link below the regular search form or by clicking the 
+Modify Search Options 
+ link after performing a search. The search options offer more precise searching of the catalog content.
+
+To limit your search to only specific types of catalog content, check only the checkboxes for content categories you wish to include in your search.
+
+Check the "
+Whole Word/Phrase
+" check box to search for an exact match for a keyword or phrase. For instance, entering "bio" will only return hits in which the term "bio" stands alone; it will not return any instances of the term "biology". The same is true if you enter a phrase.
+
+Click "
+Show Prefix List
+" to display a list of all course prefixes available in the catalog. You may enter a keyword phrase that includes a course prefix and code (like "ENG 101") to better locate a specific course. The closest available matches will be returned first.
+
+Click the 
+Search
+ button to perform the search.
+
+ 3. Browsing the Catalog
+
+BACK TO TOP
+
+Overview
+
+You may easily browse through the catalogs by using the different navigation
+		links on the left side of the page. Each catalog may have its own distinct
+		set of navigation links.
+
+Some links may display pages about the catalog or other
+		related information. Other links may display listings of
+		courses		or
+		programs		within the catalog. These navigation links may display other information
+		that is broken down by various methods such as by
+		school/colleges,
+		by
+		departments,
+		or by
+		program,
+		or
+		course		types.
+
+Some pages may show "
+Go to Information...
+"
+		links following a school/college		or
+		department		which, when clicked, will display more information about that
+		school/college		or
+		department.	  
+
+		Course		and
+		program		titles are almost always shown as links. Clicking on a course		title will display course information below the course title about the
+		course				 (course information may be shown in a pop up window if you have an older browser). Clicking on a program		title will display all the related information for the
+		program.
+
+FlashPoint™ Links
+
+Some
+		school/colleges, departments, programs, and courses		may have FlashPoint Links associated with them that may be a text
+		link or a click-able graphic. These FlashPoint Links are links to
+		an additional digital resource. The digital resource may be another web
+		page, a text document, audio, video, or many other types of media and
+		may require a special browser plug-in.
+
+To view a FlashPoint Link, simply click on it. All FlashPoint
+		Links will be displayed in a new pop up window.
+
+ 3.1. 
+Printing Pages of the Catalog
+
+BACK TO TOP
+
+To print a page click the print link. The "
+Print Friendly
+" version will open up with
+		just the content of the page in it (no navigation or header). If you click the print link on a
+		"
+Print Friendly
+" page the browser will popup with the print dialog allowing you to print that page.
+
+Problems with Gateway Print Links
+
+If your browser does not support the print link you may need to use the operating
+		system or web browser's built in print functions instead.
+
+									Print this page.
+							
+All 
+catalogs
+ © 2024 California State University, Long Beach.
+ 
+Powered by 
+Modern Campus Catalog™
+.
+
