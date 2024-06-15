@@ -73,10 +73,17 @@ def scrape_site(page, url, output_dir, seen_urls):
         save_content(url, page_content, output_dir)
 
     # Find all links and recursively scrape them
+    # links = [a['href'] for a in soup.find_all('a', href=True) 
+    #          if 'catalog.csulb.edu' in urljoin(url, a['href']) and 
+    #          'preview_course' not in a['href'] and 
+    #          not a['href'].startswith('#')]
+
     links = [a['href'] for a in soup.find_all('a', href=True) 
-             if 'catalog.csulb.edu' in urljoin(url, a['href']) and 
-             'preview_course' not in a['href'] and 
-             not a['href'].startswith('#')]
+             if '/admissions/' in urljoin(url, a['href']) or '/program/' in urljoin(url, a['href'])]
+    
+    links = [link for link in links if not link.startswith('#')]
+    
+
     for link in links:
         full_link = urljoin(url, link)
         scrape_site(page, full_link, output_dir, seen_urls)
@@ -96,6 +103,10 @@ def scrape_urls(url_list, output_dir='output'):
 
 ##### MAIN #####
 
+# if __name__ == "__main__":
+#     base_url = "http://catalog.csulb.edu"
+#     scrape_urls([base_url])
+
 if __name__ == "__main__":
-    base_url = "http://catalog.csulb.edu"
+    base_url = "https://grad.berkeley.edu/admissions/choosing-your-program/list/"
     scrape_urls([base_url])
