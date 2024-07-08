@@ -1,4 +1,5 @@
 import json
+import logging
 
 import boto3
 
@@ -90,35 +91,8 @@ def message_handler(existing_chat_history, prompt, is_tool_message=False):
     return [response_body, llm_message, existing_chat_history]
 
 
-def query_bedrock_llm(messages):
-    response = bedrock_client.invoke_model(
-        modelId=MODEL_ID,
-        body=json.dumps(
-            {
-                "anthropic_version": "bedrock-2023-05-31",  # This is required to use chat style messages object
-                "system": baseline_sys_prompt,
-                "messages": messages,
-                "max_tokens": 3000,
-                "tools": [recipe_db_query_tool],
-                # This config forces the model to always call the recipe db query tool atleast once
-                # https://docs.anthropic.com/en/docs/build-with-claude/tool-use#controlling-claudes-output
-                # "tool_choice": {
-                #     "type": "tool",
-                #     "name": recipe_db_query_tool['name']
-                # },
-                # TODO: TUNE THESE VALUES
-                "temperature": 0.1,
-                "top_p": 0.9,
-            }
-        ),
-    )
-    response_body = json.loads(response.get("body").read())
-
-    return response_body
-
-
 # Takes as an argument to LLM message content, returns a list of the fn result objects
-def handle_function_calls(tool_call_message_content, msg_output):
+def handle_function_calls(tool_call_message_content):
     tool_results = []
 
     for tool_call in tool_call_message_content:
@@ -135,7 +109,7 @@ def handle_function_calls(tool_call_message_content, msg_output):
 
         if fn_name == "query_food_recipe_vector_db":
             if "queries" not in fn_args:
-                print(
+                logging.error(
                     f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping.."
                 )
                 fn_result["content"] = ""
@@ -144,8 +118,7 @@ def handle_function_calls(tool_call_message_content, msg_output):
                 continue
 
             model_msg = f"Model called {fn_name} with args {fn_args}"
-            msg_output.append(model_msg)
-            print(model_msg)
+            logging.info(model_msg)
             context_docs = handle_vector_db_queries(
                 fn_args["queries"], document_retriever
             )
@@ -156,7 +129,7 @@ def handle_function_calls(tool_call_message_content, msg_output):
         # TODO: handle web search invocation here
 
         else:
-            print(f"ERROR: Attempted call to unknown function {fn_name}")
+            logging.error(f"ERROR: Attempted call to unknown function {fn_name}")
             fn_result["content"] = ""
             fn_result["is_error"] = True
             tool_results.append(fn_result)
@@ -197,20 +170,17 @@ Example payload structure of llm_message['content']:
 
 # This function is the entry point to invoke the LLM with support for function calling
 # parsing output, calling requested functions, sending output is handled here
-def run_chat_loop(prompt):
-    msg_output = []
-    user_msg = f"[User]: {prompt}"
-    msg_output.append(user_msg)
-    print(user_msg)
+def run_chat_loop(existing_chat_history, prompt):
+    logging.info(f"[User]: {prompt}")
 
     response_body, llm_message, chat_history = message_handler(
-        existing_chat_history=[], prompt=prompt
+        existing_chat_history=existing_chat_history, prompt=prompt
     )
 
     # The model wants to call tools, call them, provide response, repeat until content is generated
     while response_body["stop_reason"] == "tool_use":
         fn_results = handle_function_calls(
-            tool_call_message_content=llm_message["content"], msg_output=msg_output
+            tool_call_message_content=llm_message["content"]
         )
 
         # Send function results back to LLM as a new message with the existing chat history
@@ -218,9 +188,9 @@ def run_chat_loop(prompt):
             existing_chat_history=chat_history, prompt=fn_results, is_tool_message=True
         )
 
-    # The model is done calling tools
-    model_msg = f"\n[Model]: {llm_message['content'][0]['text']}"
-    msg_output.append(model_msg)
-    print(model_msg)
+    # The model is done calling tools, parse output and update chat
+    # history with the models response
+    model_text_output = llm_message["content"][0]["text"]
+    logging.info(f"\n[Model]: {model_text_output}")
 
-    return msg_output
+    return [model_text_output, chat_history]

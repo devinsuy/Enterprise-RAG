@@ -2,11 +2,12 @@ import os
 
 import boto3
 import pandas as pd
-from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Qdrant
+
+from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 
 # Maintain a reference to the vector db and retriever
 store = None
