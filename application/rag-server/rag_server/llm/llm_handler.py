@@ -1,0 +1,226 @@
+import json
+
+import boto3
+
+from rag_server.constants import MODEL_ID
+from rag_server.data_utils import (format_docs, handle_vector_db_queries,
+                                   initialize_vector_db)
+
+from .message_utils import generate_message, generate_tool_message
+from .prompts import baseline_sys_prompt
+from .tools import recipe_db_query_tool
+
+document_retriever = initialize_vector_db()
+bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+
+def query_bedrock_llm(messages):
+    response = bedrock_client.invoke_model(
+        modelId=MODEL_ID,
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",  # This is required to use chat style messages object
+                "system": baseline_sys_prompt,
+                "messages": messages,
+                "max_tokens": 3000,
+                "tools": [recipe_db_query_tool],
+                # This config forces the model to always call the recipe db query tool atleast once
+                # https://docs.anthropic.com/en/docs/build-with-claude/tool-use#controlling-claudes-output
+                # "tool_choice": {
+                #     "type": "tool",
+                #     "name": recipe_db_query_tool['name']
+                # },
+                # TODO: TUNE THESE VALUES
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
+        ),
+    )
+    response_body = json.loads(response.get("body").read())
+
+    return response_body
+
+
+"""
+Example response body structure:
+{
+   "id":"msg_bdrk_01C5GGkafK7aL3P5i3rsMr1p",
+   "type":"message",
+   "role":"assistant",
+   "model":"claude-3-sonnet-20240229",
+   "content":[
+      {
+         "type":"tool_use",
+         "id":"toolu_bdrk_01CQiYa8BMJfpJC68DuRdwQn",
+         "name":"query_food_recipe_vector_db",
+         "input":{
+            "queries":[
+               "healthy fish dinner recipe under 500 calories",
+               "fish dinner recipe for two under 40 minutes"
+            ]
+         }
+      }
+   ],
+   "stop_reason":"tool_use",
+   "stop_sequence":"None",
+   "usage":{
+      "input_tokens":559,
+      "output_tokens":55
+   }
+}
+"""
+
+
+def message_handler(existing_chat_history, prompt, is_tool_message=False):
+    # Fn results is an array of tool response objects
+    # message structure needs to reflect that
+    if is_tool_message:
+        user_message = generate_tool_message(prompt)
+    else:
+        user_message = generate_message(prompt)
+    existing_chat_history.append(user_message)
+
+    # Parse the response content
+    response_body = query_bedrock_llm(existing_chat_history)
+    llm_message = {"role": response_body["role"], "content": response_body["content"]}
+
+    # Add the response message to the chat history
+    existing_chat_history.append(llm_message)
+
+    return [response_body, llm_message, existing_chat_history]
+
+
+def query_bedrock_llm(messages):
+    response = bedrock_client.invoke_model(
+        modelId=MODEL_ID,
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",  # This is required to use chat style messages object
+                "system": baseline_sys_prompt,
+                "messages": messages,
+                "max_tokens": 3000,
+                "tools": [recipe_db_query_tool],
+                # This config forces the model to always call the recipe db query tool atleast once
+                # https://docs.anthropic.com/en/docs/build-with-claude/tool-use#controlling-claudes-output
+                # "tool_choice": {
+                #     "type": "tool",
+                #     "name": recipe_db_query_tool['name']
+                # },
+                # TODO: TUNE THESE VALUES
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
+        ),
+    )
+    response_body = json.loads(response.get("body").read())
+
+    return response_body
+
+
+# Takes as an argument to LLM message content, returns a list of the fn result objects
+def handle_function_calls(tool_call_message_content, msg_output):
+    tool_results = []
+
+    for tool_call in tool_call_message_content:
+        # Only process messages from the LLM that are function calls
+        if tool_call["type"] != "tool_use":
+            continue
+        fn_id = tool_call["id"]
+        fn_name = tool_call["name"]
+        fn_args = tool_call["input"]
+        fn_result = {
+            "type": "tool_result",
+            "tool_use_id": fn_id,
+        }
+
+        if fn_name == "query_food_recipe_vector_db":
+            if "queries" not in fn_args:
+                print(
+                    f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping.."
+                )
+                fn_result["content"] = ""
+                fn_result["is_error"] = True
+                tool_results.append(fn_result)
+                continue
+
+            model_msg = f"Model called {fn_name} with args {fn_args}"
+            msg_output.append(model_msg)
+            print(model_msg)
+            context_docs = handle_vector_db_queries(
+                fn_args["queries"], document_retriever
+            )
+            context_str = format_docs(context_docs)
+            fn_result["content"] = context_str
+            tool_results.append(fn_result)
+
+        # TODO: handle web search invocation here
+
+        else:
+            print(f"ERROR: Attempted call to unknown function {fn_name}")
+            fn_result["content"] = ""
+            fn_result["is_error"] = True
+            tool_results.append(fn_result)
+
+    return tool_results
+
+
+"""
+Example payload structure of response_body:
+
+{'id': 'msg_bdrk_01REesjegNiLteurBoxW7pSt',
+ 'type': 'message',
+ 'role': 'assistant',
+ 'model': 'claude-3-sonnet-20240229',
+ 'content': [{'type': 'tool_use',
+   'id': 'toolu_bdrk_01191W2FuAFTRoDqKKeJSmmn',
+   'name': 'query_food_recipe_vector_db',
+   'input': {'queries': ['thai food',
+     'peanut free',
+     'low carb',
+     'not spicy']}}],
+ 'stop_reason': 'tool_use',
+ 'stop_sequence': None,
+ 'usage': {'input_tokens': 573, 'output_tokens': 52}}
+
+
+Example payload structure of llm_message['content']:
+
+[{'type': 'tool_use',
+   'id': 'toolu_bdrk_01191W2FuAFTRoDqKKeJSmmn',
+   'name': 'query_food_recipe_vector_db',
+   'input': {'queries': ['thai food',
+     'peanut free',
+     'low carb',
+     'not spicy']}}]
+"""
+
+
+# This function is the entry point to invoke the LLM with support for function calling
+# parsing output, calling requested functions, sending output is handled here
+def run_chat_loop(prompt):
+    msg_output = []
+    user_msg = f"[User]: {prompt}"
+    msg_output.append(user_msg)
+    print(user_msg)
+
+    response_body, llm_message, chat_history = message_handler(
+        existing_chat_history=[], prompt=prompt
+    )
+
+    # The model wants to call tools, call them, provide response, repeat until content is generated
+    while response_body["stop_reason"] == "tool_use":
+        fn_results = handle_function_calls(
+            tool_call_message_content=llm_message["content"], msg_output=msg_output
+        )
+
+        # Send function results back to LLM as a new message with the existing chat history
+        response_body, llm_message, chat_history = message_handler(
+            existing_chat_history=chat_history, prompt=fn_results, is_tool_message=True
+        )
+
+    # The model is done calling tools
+    model_msg = f"\n[Model]: {llm_message['content'][0]['text']}"
+    msg_output.append(model_msg)
+    print(model_msg)
+
+    return msg_output
