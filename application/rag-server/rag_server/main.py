@@ -2,12 +2,12 @@ import logging
 from datetime import datetime
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from pydantic import ValidationError
-
 from api_types import ChatHistoryResponse, ChatRequest, Message
 from data_utils import init_data_utils
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from llm.llm_handler import init_llm_handler, run_chat_loop
+from pydantic import ValidationError
 
 # Configure logging
 logging.basicConfig(
@@ -18,6 +18,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# Allow local development of client to make CORS requests
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/api/v1/health")
@@ -54,7 +67,7 @@ def init_server():
     logger.info("Running server initialization ...")
     init_data_utils()
     init_llm_handler()
-    logger.info("Server is ready ready to handle requests")
+    logger.info("Server is ready to handle requests")
 
 
 # Allow running of app from direct python invocation

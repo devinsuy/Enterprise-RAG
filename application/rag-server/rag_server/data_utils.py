@@ -3,12 +3,11 @@ import os
 
 import boto3
 import pandas as pd
+from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Qdrant
-
-from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 
 logger = logging.getLogger(__name__)
 store = None
@@ -160,9 +159,9 @@ def initialize_documents(max_document_count=None):
 def initialize_vector_db():
     # Use this when developing to more quickly load
     # to avoid waiting for all 500,000+ documents
-    # documents = initialize_documents(max_document_count=1000)
+    documents = initialize_documents(max_document_count=1000)
 
-    documents = initialize_documents()
+    # documents = initialize_documents()
 
     logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
