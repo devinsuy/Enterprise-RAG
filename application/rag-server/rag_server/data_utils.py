@@ -1,3 +1,4 @@
+import logging
 import os
 
 import boto3
@@ -9,12 +10,14 @@ from langchain_community.vectorstores import Qdrant
 
 from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 
-# Maintain a reference to the vector db and retriever
+logger = logging.getLogger(__name__)
 store = None
 retriever = None
 
-# Load environment variables from .env file
-load_dotenv()
+
+def init_data_utils():
+    # Load environment variables from .env file
+    load_dotenv()
 
 
 # Load data from s3
@@ -142,30 +145,40 @@ def create_documents(df):
 
 
 def initialize_documents(max_document_count=None):
+    logger.info("Initializing recipes data")
     df = download_and_load_data_if_not_exists(BUCKET_NAME, FILE_KEY, DOWNLOAD_PATH)
     if max_document_count != None:
         df = df.sample(
             n=max_document_count
         )  # Reduce the number of rows by randomly sampling
     documents = create_documents(df)
+    logger.info(f"Successfully created {len(documents)} documents")
 
     return documents
 
 
 def initialize_vector_db():
-    documents = initialize_documents(max_document_count=1000)
+    # Use this when developing to more quickly load
+    # to avoid waiting for all 500,000+ documents
+    # documents = initialize_documents(max_document_count=1000)
+
+    documents = initialize_documents()
+
+    logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
 
     # Update references
     global store
     global retriever
 
+    logger.info("Initializing document db, this will take a while ...")
     store = Qdrant.from_documents(
         documents,
         embedding_model,
         location=":memory:",
     )
     retriever = store.as_retriever()
+    logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
     return retriever
 

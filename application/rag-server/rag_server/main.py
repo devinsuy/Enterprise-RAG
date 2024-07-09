@@ -6,10 +6,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import ValidationError
 
 from api_types import ChatHistoryResponse, ChatRequest, Message
-from llm.llm_handler import run_chat_loop
+from data_utils import init_data_utils
+from llm.llm_handler import init_llm_handler, run_chat_loop
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -35,16 +40,24 @@ async def generate_message(request: ChatRequest):
             llm_response_text=model_text_output, new_chat_history=updated_chat_history
         )
     except ValidationError as e:
-        logging.error(f"Validation error: {e}")
+        logger.error(f"Validation error: {e}")
         raise HTTPException(status_code=422, detail=str(e))
     except ValueError as e:
-        logging.error(f"Value error: {e}")
+        logger.error(f"Value error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+def init_server():
+    logger.info("Running server initialization ...")
+    init_data_utils()
+    init_llm_handler()
+    logger.info("Server is ready ready to handle requests")
 
 
 # Allow running of app from direct python invocation
 if __name__ == "__main__":
+    init_server()
     uvicorn.run(app, host="0.0.0.0", port=8000)

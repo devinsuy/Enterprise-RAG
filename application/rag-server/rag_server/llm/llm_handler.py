@@ -11,8 +11,19 @@ from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
 from .tools import recipe_db_query_tool
 
-document_retriever = initialize_vector_db()
-bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
+logger = logging.getLogger(__name__)
+
+# Avoid implicit initialization, leads to race conditions with main.py importing this
+document_retriever = None
+bedrock_client = None
+
+
+def init_llm_handler():
+    global document_retriever
+    global bedrock_client
+
+    document_retriever = initialize_vector_db()
+    bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 
 def query_bedrock_llm(messages):
@@ -109,7 +120,7 @@ def handle_function_calls(tool_call_message_content):
 
         if fn_name == "query_food_recipe_vector_db":
             if "queries" not in fn_args:
-                logging.error(
+                logger.error(
                     f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping.."
                 )
                 fn_result["content"] = ""
@@ -118,7 +129,7 @@ def handle_function_calls(tool_call_message_content):
                 continue
 
             model_msg = f"Model called {fn_name} with args {fn_args}"
-            logging.info(model_msg)
+            logger.info(model_msg)
             context_docs = handle_vector_db_queries(
                 fn_args["queries"], document_retriever
             )
@@ -129,7 +140,7 @@ def handle_function_calls(tool_call_message_content):
         # TODO: handle web search invocation here
 
         else:
-            logging.error(f"ERROR: Attempted call to unknown function {fn_name}")
+            logger.error(f"ERROR: Attempted call to unknown function {fn_name}")
             fn_result["content"] = ""
             fn_result["is_error"] = True
             tool_results.append(fn_result)
@@ -171,7 +182,7 @@ Example payload structure of llm_message['content']:
 # This function is the entry point to invoke the LLM with support for function calling
 # parsing output, calling requested functions, sending output is handled here
 def run_chat_loop(existing_chat_history, prompt):
-    logging.info(f"[User]: {prompt}")
+    logger.info(f"[User]: {prompt}")
 
     response_body, llm_message, chat_history = message_handler(
         existing_chat_history=existing_chat_history, prompt=prompt
@@ -191,6 +202,6 @@ def run_chat_loop(existing_chat_history, prompt):
     # The model is done calling tools, parse output and update chat
     # history with the models response
     model_text_output = llm_message["content"][0]["text"]
-    logging.info(f"\n[Model]: {model_text_output}")
+    logger.info(f"\n[Model]: {model_text_output}")
 
     return [model_text_output, chat_history]

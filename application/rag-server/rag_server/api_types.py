@@ -55,4 +55,3 @@ class ChatHistoryResponse(BaseModel):
     # The existing chat history, with the newly added messages
     # this includes any tool calls, tool responses, and the llm response
     new_chat_history: List[Message]
-
