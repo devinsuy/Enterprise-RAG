@@ -6,9 +6,11 @@ import { API_ENDPOINTS } from 'config'
 interface ChatTab {
   id: number
   messages: ChatMessage[]
+  chatHistory: LLMMessage[]
 }
 
 interface ChatContextType {
+  loading: boolean
   tabs: ChatTab[]
   activeTab: number
   sendMessage: (text: string) => void
@@ -25,9 +27,9 @@ interface ChatProviderProps {
 const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
 export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
-  const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [] }])
-  const [chatHistory, setChatHistory] = useState<LLMMessage[]>([])
+  const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [] }])
   const [activeTab, setActiveTab] = useState(0)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const sendMessage = async (text: string) => {
     const newMessage: ChatMessage = { user: 'User', text, timestamp: getTimeStr() }
@@ -37,40 +39,36 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       )
     )
 
+    setLoading(true)
     try {
       const response: ChatHistoryResponse = await axios.post(API_ENDPOINTS.chat, {
-        existing_chat_history: chatHistory,
+        existing_chat_history: tabs[activeTab].chatHistory,
         prompt: text
       })
       console.log(JSON.stringify(response))
       const { new_chat_history: newChatHistory, llm_response_text: llmResponseText } = response.data
-      setChatHistory(newChatHistory) // Update chat history state for subsequent requests
-
       const llmMsg = { user: 'LLM', text: llmResponseText, timestamp: getTimeStr() }
+
+      // Update the current tab with the new messages and chat history
       setTabs(prevTabs =>
-        prevTabs.map(tab =>
-          tab.id === activeTab ? { ...tab, messages: [...tab.messages, llmMsg] } : tab
-        )
+        prevTabs.map(tab => {
+          if (tab.id !== activeTab) return tab
+          return {
+            ...tab,
+            messages: [...tab.messages, llmMsg],
+            chatHistory: newChatHistory
+          }
+        })
       )
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
-      // setLoading(false)
+      setLoading(false)
     }
-
-    // Simulate API call
-    // setTimeout(() => {
-    //   const responseMessage: ChatMessage = { user: 'LLM', text: 'Response from LLM', timestamp: new Date().toLocaleTimeString() }
-    //   setTabs(prevTabs =>
-    //     prevTabs.map(tab =>
-    //       tab.id === activeTab ? { ...tab, messages: [...tab.messages, responseMessage] } : tab
-    //     )
-    //   )
-    // }, 1000)
   }
 
   const addTab = () => {
-    setTabs(prevTabs => [...prevTabs, { id: prevTabs.length, messages: [] }])
+    setTabs(prevTabs => [...prevTabs, { id: prevTabs.length, messages: [], chatHistory: [] }])
   }
 
   const switchTab = (id: number) => {
@@ -78,7 +76,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   }
 
   return (
-    <ChatContext.Provider value={{ tabs, activeTab, sendMessage, addTab, switchTab }}>
+    <ChatContext.Provider value={{ tabs, activeTab, sendMessage, addTab, switchTab, loading }}>
       {children}
     </ChatContext.Provider>
   )

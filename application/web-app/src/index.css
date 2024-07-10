@@ -45,9 +45,10 @@ body {
 .user-message {
   justify-content: right;
   text-align: right;
+  white-space: pre-line;
 }
 
 .llm-message {
   text-align: left;
-
+  white-space: pre-line;
 }

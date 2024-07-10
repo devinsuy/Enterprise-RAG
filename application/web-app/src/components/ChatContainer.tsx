@@ -4,7 +4,7 @@ import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 
 export const ChatContainer: React.FC = () => (
-  <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#fff', margin: 15, padding: 2, borderRadius: 2, boxShadow: 1, height: '100%', maxHeight: '80vh' }}>
+  <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#fff', margin: 10, padding: 2, borderRadius: 2, boxShadow: 1, height: '100%', maxHeight: '65vh' }}>
     <MessageList />
     <MessageInput />
   </Box>
