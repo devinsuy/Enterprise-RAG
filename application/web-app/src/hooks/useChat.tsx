@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type ReactNode, type FC } from 'react'
-import { type ChatHistoryResponse, type LLMMessage, type ChatMessage } from '../types'
+import { type ChatHistoryResponse, type LLMMessage, type ChatMessage, type PromptFnCalls } from '../types'
 import axios from 'axios'
 import { API_ENDPOINTS } from 'config'
 
@@ -7,6 +7,7 @@ interface ChatTab {
   id: number
   messages: ChatMessage[]
   chatHistory: LLMMessage[]
+  fnCalls: PromptFnCalls[]
 }
 
 interface ChatContextType {
@@ -27,7 +28,7 @@ interface ChatProviderProps {
 const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
 export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
-  const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [] }])
+  const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [], fnCalls: [] }])
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState<boolean>(false)
 
@@ -46,7 +47,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         prompt: text
       })
       console.log(JSON.stringify(response))
-      const { new_chat_history: newChatHistory, llm_response_text: llmResponseText } = response.data
+      const { new_chat_history: newChatHistory, llm_response_text: llmResponseText, fn_calls: fnCalls } = response.data
       const llmMsg = { user: 'LLM', text: llmResponseText, timestamp: getTimeStr() }
 
       // Update the current tab with the new messages and chat history
@@ -56,6 +57,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
           return {
             ...tab,
             messages: [...tab.messages, llmMsg],
+            fnCalls: [...tab.fnCalls, fnCalls],
             chatHistory: newChatHistory
           }
         })
@@ -68,7 +70,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   }
 
   const addTab = () => {
-    setTabs(prevTabs => [...prevTabs, { id: prevTabs.length, messages: [], chatHistory: [] }])
+    setTabs(prevTabs => [...prevTabs, { id: prevTabs.length, messages: [], chatHistory: [], fnCalls: [] }])
   }
 
   const switchTab = (id: number) => {
