@@ -6,7 +6,6 @@ import axios from 'axios'
 import { ChatHistoryResponse, ChatMessage, LLMMessage } from './types'
 import { API_ENDPOINTS } from './config'
 
-
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
