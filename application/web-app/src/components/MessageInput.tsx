@@ -13,6 +13,12 @@ export const MessageInput: React.FC = () => {
     }
   }
 
+  const handleKeyPress = (e: { keyCode: number }) => {
+    if (e.keyCode === 13) { // enter key was pressed
+      handleSend()
+    }
+  }
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
       <TextField
@@ -21,6 +27,8 @@ export const MessageInput: React.FC = () => {
         placeholder="Type your message..."
         value={input}
         onChange={(e) => { setInput(e.target.value) }}
+        onKeyDown={handleKeyPress}
+        required
       />
       <Button variant="contained" color="primary" onClick={handleSend} sx={{ marginLeft: 2 }}>
         Send
