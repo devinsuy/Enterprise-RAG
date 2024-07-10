@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import './App.css'
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css'
-import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react'
+import { MainContainer, ChatContainer, MessageList, Message, MessageInput, type MessageModel } from '@chatscope/chat-ui-kit-react'
 import axios from 'axios'
-import { ChatHistoryResponse, ChatMessage, LLMMessage } from './types'
+import { type ChatHistoryResponse, type ChatMessage, type LLMMessage } from './types'
 import { API_ENDPOINTS } from './config'
 
 const App: React.FC = () => {
@@ -16,7 +16,7 @@ const App: React.FC = () => {
   const handleSendMessage = async (input: string) => {
     if (input.trim() === '') return
 
-    const newMessage: ChatMessage = { user: 'User', text: input, timestamp: getTimeStr()}
+    const newMessage: ChatMessage = { user: 'User', text: input, timestamp: getTimeStr() }
     setMessages([...messages, newMessage])
     setLoading(true)
 
@@ -26,14 +26,13 @@ const App: React.FC = () => {
         prompt: input
       })
       console.log(JSON.stringify(response))
-      const { new_chat_history, llm_response_text} = response.data
-      setChatHistory(new_chat_history) // Update chat history state for subsequent requests
+      const { new_chat_history: newChatHistory, llm_response_text: llmResponseText } = response.data
+      setChatHistory(newChatHistory) // Update chat history state for subsequent requests
 
-      const llmMsg = { user: 'LLM', text: llm_response_text, timestamp: getTimeStr() }
+      const llmMsg = { user: 'LLM', text: llmResponseText, timestamp: getTimeStr() }
       setMessages([...messages, llmMsg])
       console.log(JSON.stringify(messages))
       console.log(JSON.stringify(chatHistory))
-
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
@@ -59,7 +58,7 @@ const App: React.FC = () => {
             {messages.map((msg, index) => (
               <Message key={index} model={getMessageModel(msg)} />
             ))}
-            {loading && <Message model={{ message: "Typing...", sentTime: "just now", sender: "Bot", direction: "incoming", position: "single" }} />}
+            {loading && <Message model={{ message: 'Typing...', sentTime: 'just now', sender: 'Bot', direction: 'incoming', position: 'single' }} />}
           </MessageList>
           <MessageInput placeholder="Type your message..." onSend={handleSendMessage} attachButton={false} />
         </ChatContainer>
