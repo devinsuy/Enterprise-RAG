@@ -25,7 +25,7 @@ interface ChatProviderProps {
   children: ReactNode
 }
 
-const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
 export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [], fnCalls: [] }])
@@ -41,6 +41,17 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
     )
 
     setLoading(true)
+
+    // TODO: Temporarily add a loading message
+    setTimeout(() => {
+      const responseMessage: ChatMessage = { user: 'LLM', text: 'Loading...', timestamp: '' }
+      setTabs(prevTabs =>
+        prevTabs.map(tab =>
+          tab.id === activeTab ? { ...tab, messages: [...tab.messages, responseMessage] } : tab
+        )
+      )
+    }, 750)
+
     try {
       const response: ChatHistoryResponse = await axios.post(API_ENDPOINTS.chat, {
         existing_chat_history: tabs[activeTab].chatHistory,
@@ -54,9 +65,10 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       setTabs(prevTabs =>
         prevTabs.map(tab => {
           if (tab.id !== activeTab) return tab
+          const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.text !== 'Loading...') // TODO: ADD LOADING PROPERLY
           return {
             ...tab,
-            messages: [...tab.messages, llmMsg],
+            messages: [...messagesWithoutLoadingMsg, llmMsg],
             fnCalls: [...tab.fnCalls, fnCalls],
             chatHistory: newChatHistory
           }

@@ -40,15 +40,15 @@ export const DebugPanel = ({ open, onClose }: DebugPanelProps) => {
           })}
 
           {selectedView === 'ToolCalls' && tabs[activeTab].fnCalls.map((promptFnCalls, i) => {
-            return (<>
-              <Typography key={i} variant='body1'>{promptFnCalls.user_prompt}</Typography>
+            return (<div key={i} style={{ marginBottom: '15px', marginTop: '15px' }}>
+              <Typography key={i} variant={'h6'}>{promptFnCalls.user_prompt}</Typography>
               {promptFnCalls.fn_calls.map((fnMsg, j) => {
                 if (fnMsg.type !== 'tool_use') {
                   return undefined
                 }
                 return <Typography key={`${i}-${j}`} variant="body1">{JSON.stringify((fnMsg as ToolUseContent).input)}</Typography>
               })}
-            </>)
+            </div>)
           })}
         </div>
       </Drawer>
