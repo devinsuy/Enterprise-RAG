@@ -189,7 +189,9 @@ def run_chat_loop(existing_chat_history, prompt):
     )
 
     # The model wants to call tools, call them, provide response, repeat until content is generated
+    fn_calls = []
     while response_body["stop_reason"] == "tool_use":
+        fn_calls.extend(response_body['content'])
         fn_results = handle_function_calls(
             tool_call_message_content=llm_message["content"]
         )
@@ -204,4 +206,4 @@ def run_chat_loop(existing_chat_history, prompt):
     model_text_output = llm_message["content"][0]["text"]
     logger.info(f"\n[Model]: {model_text_output}")
 
-    return [model_text_output, chat_history]
+    return [model_text_output, chat_history, fn_calls]

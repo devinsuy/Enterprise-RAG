@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 import uvicorn
-from api_types import ChatHistoryResponse, ChatRequest, Message
+from api_types import ChatHistoryResponse, ChatRequest, PromptFnCalls
 from data_utils import init_data_utils
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,11 +46,22 @@ async def generate_message(request: ChatRequest):
         chat_history_as_dicts = [
             message.model_dump() for message in request.existing_chat_history
         ]
-        model_text_output, updated_chat_history = run_chat_loop(
+        model_text_output, updated_chat_history, fn_calls = run_chat_loop(
             chat_history_as_dicts, request.prompt
         )
+        # print("TRYING TO CREATE WITH")
+        # print(fn_calls)
+        # fn_resp = PromptFnCalls(user_prompt=request.prompt, fn_calls=fn_calls)
+    
+        # FIX THIS
+        fn_resp = {
+            "user_prompt": request.prompt,
+            "fn_calls": fn_calls
+        }
         return ChatHistoryResponse(
-            llm_response_text=model_text_output, new_chat_history=updated_chat_history
+            llm_response_text=model_text_output,
+            new_chat_history=updated_chat_history,
+            fn_calls=fn_resp,
         )
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
