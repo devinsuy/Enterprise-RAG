@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Box, TextField, Button } from '@mui/material'
-import { useChat } from 'hooks/useChat'
+import { useChat } from '../hooks/useChat'
 
 export const MessageInput: React.FC = () => {
   const [input, setInput] = useState('')

@@ -6,17 +6,17 @@ export const AppBar: React.FC = () => {
   const { tabs, activeTab, addTab, switchTab } = useChat()
 
   return (
-    <MuiAppBar position="static">
+    <MuiAppBar position="sticky">
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Scrumptious
         </Typography>
         <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
           {tabs.map((tab) => (
-            <Tab key={tab.id} label={`Chat ${tab.id + 1}`} />
+            <Tab key={tab.id} label={`Thread ${tab.id + 1}`}/>
           ))}
           <Button color="inherit" onClick={addTab}>
-            + New Tab
+            + New Thread
           </Button>
         </Tabs>
       </Toolbar>

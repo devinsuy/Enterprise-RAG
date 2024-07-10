@@ -5,6 +5,7 @@ import App from './App'
 import reportWebVitals from './reportWebVitals'
 import theme from 'theme'
 import { ThemeProvider } from '@mui/material'
+import { ChatProvider } from 'hooks/useChat'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -12,7 +13,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
       <ThemeProvider theme={theme}>
-        <App />
+        <ChatProvider>
+          <App />
+        </ChatProvider>
       </ThemeProvider>
   </React.StrictMode>
 )

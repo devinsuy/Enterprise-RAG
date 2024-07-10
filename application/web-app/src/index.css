@@ -34,3 +34,20 @@ body {
   margin-left: 10px;
   cursor: pointer;
 }
+
+.user-message-container {
+}
+
+.llm-message-container {
+}
+
+
+.user-message {
+  justify-content: right;
+  text-align: right;
+}
+
+.llm-message {
+  text-align: left;
+
+}
