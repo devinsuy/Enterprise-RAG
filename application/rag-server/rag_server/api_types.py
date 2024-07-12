@@ -1,4 +1,4 @@
-from typing import List, Union, Any
+from typing import Any, List, Union
 
 from fastapi import FastAPI
 from pydantic import BaseModel, validator
@@ -66,4 +66,17 @@ class ChatHistoryResponse(BaseModel):
     new_chat_history: List[Message]
 
     # fn_calls: PromptFnCalls
-    fn_calls: Any # FIX THIS
+    fn_calls: Any  # FIX THIS
+
+
+class DocsQueryRequest(BaseModel):
+    queries: List[str]
+
+
+class DocumentResponse(BaseModel):
+    page_content: str
+    metadata: dict
+
+
+class DocsQueryResponse(BaseModel):
+    documents: List[DocumentResponse]

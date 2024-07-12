@@ -2,8 +2,15 @@ import logging
 from datetime import datetime
 
 import uvicorn
-from api_types import ChatHistoryResponse, ChatRequest, PromptFnCalls
-from data_utils import init_data_utils
+from api_types import (
+    ChatHistoryResponse,
+    ChatRequest,
+    DocsQueryRequest,
+    DocsQueryResponse,
+    DocumentResponse,
+    PromptFnCalls,
+)
+from data_utils import handle_vector_db_queries, init_data_utils
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from llm.llm_handler import init_llm_handler, run_chat_loop
@@ -52,12 +59,9 @@ async def generate_message(request: ChatRequest):
         # print("TRYING TO CREATE WITH")
         # print(fn_calls)
         # fn_resp = PromptFnCalls(user_prompt=request.prompt, fn_calls=fn_calls)
-    
+
         # FIX THIS
-        fn_resp = {
-            "user_prompt": request.prompt,
-            "fn_calls": fn_calls
-        }
+        fn_resp = {"user_prompt": request.prompt, "fn_calls": fn_calls}
         return ChatHistoryResponse(
             llm_response_text=model_text_output,
             new_chat_history=updated_chat_history,
@@ -74,6 +78,22 @@ async def generate_message(request: ChatRequest):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+@app.post("/api/v1/recipes/query", response_model=DocsQueryResponse)
+async def query_documents(request: DocsQueryRequest):
+    try:
+        document_objects = handle_vector_db_queries(request.queries, document_retriever)
+
+        # Serialize the document objects
+        serialized_docs = [
+            DocumentResponse(page_content=doc.page_content, metadata=doc.metadata)
+            for doc in document_objects
+        ]
+
+        return DocsQueryResponse(documents=serialized_docs)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def init_server():
     logger.info("Running server initialization ...")
     init_data_utils()
@@ -84,4 +104,8 @@ def init_server():
 # Allow running of app from direct python invocation
 if __name__ == "__main__":
     init_server()
+    from llm.llm_handler import (
+        document_retriever,
+    )  # Only import retriever after it's defined
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
