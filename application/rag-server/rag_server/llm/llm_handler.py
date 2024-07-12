@@ -4,8 +4,11 @@ import logging
 import boto3
 
 from rag_server.constants import MODEL_ID
-from rag_server.data_utils import (format_docs, handle_vector_db_queries,
-                                   initialize_vector_db)
+from rag_server.data_utils import (
+    format_docs,
+    handle_vector_db_queries,
+    initialize_vector_db,
+)
 
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
@@ -191,7 +194,7 @@ def run_chat_loop(existing_chat_history, prompt):
     # The model wants to call tools, call them, provide response, repeat until content is generated
     fn_calls = []
     while response_body["stop_reason"] == "tool_use":
-        fn_calls.extend(response_body['content'])
+        fn_calls.extend(response_body["content"])
         fn_results = handle_function_calls(
             tool_call_message_content=llm_message["content"]
         )

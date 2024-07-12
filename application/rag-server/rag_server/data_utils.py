@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -37,107 +38,57 @@ def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):
 
 
 def create_documents(df):
+    df_copy = df.copy(deep=True)
+    df = df.dropna(subset=["AggregatedRating"])
+    df_copy = df_copy.fillna("")  # Convert NA values to empty strings
+    df_copy = df_copy.astype(str)  # Cast all columns to string
+
     documents = []
-    for _index, row in df.iterrows():
+    for _index, row in df_copy.iterrows():
         metadata = {
-            "recipe_id": (
-                str(row["RecipeId"])
-                if not pd.isna(row["RecipeId"])
-                else "No ID Available"
-            ),
-            "name": (
-                str(row["Name"]) if not pd.isna(row["Name"]) else "No Name Available"
-            ),
-            "cook_time": (
-                str(row["CookTime"])
-                if not pd.isna(row["CookTime"])
-                else "No Cook Time Available"
-            ),
-            "prep_time": (
-                str(row["PrepTime"])
-                if not pd.isna(row["PrepTime"])
-                else "No Prep Time Available"
-            ),
-            "total_time": (
-                str(row["TotalTime"])
-                if not pd.isna(row["TotalTime"])
-                else "No Total Time Available"
+            "name": row["Name"] if row["Name"] else "No Name Available",
+            "description": (
+                row["Description"] if row["Description"] else "No Description Available"
             ),
             "recipe_category": (
-                str(row["RecipeCategory"])
-                if not pd.isna(row["RecipeCategory"])
+                row["RecipeCategory"]
+                if row["RecipeCategory"]
                 else "No Category Available"
             ),
             "keywords": (
-                str(row["Keywords"])
-                if not pd.isna(row["Keywords"]).all()
+                row["Keywords_string"]
+                if row["Keywords_string"]
                 else "No Keywords Available"
             ),
+            "recipe_ingredient_parts": (
+                row["RecipeIngredientParts"]
+                if row["RecipeIngredientParts"]
+                else "No Recipe Ingredient Parts Available"
+            ),
+            "recipe_instructions": (
+                row["RecipeInstructions"]
+                if row["RecipeInstructions"]
+                else "No Recipe Instructions Available"
+            ),
             "aggregated_rating": (
-                str(row["AggregatedRating"])
-                if not pd.isna(row["AggregatedRating"])
+                row["AggregatedRating"]
+                if row["AggregatedRating"]
                 else "No Rating Available"
             ),
             "review_count": (
-                str(row["ReviewCount"])
-                if not pd.isna(row["ReviewCount"])
-                else "No Reviews Available"
-            ),
-            "calories": (
-                str(row["Calories"])
-                if not pd.isna(row["Calories"])
-                else "No Calories Information Available"
-            ),
-            "fat_content": (
-                str(row["FatContent"])
-                if not pd.isna(row["FatContent"])
-                else "No Fat Content Available"
-            ),
-            "saturated_fat_content": (
-                str(row["SaturatedFatContent"])
-                if not pd.isna(row["SaturatedFatContent"])
-                else "No Saturated Fat Content Available"
-            ),
-            "cholesterol_content": (
-                str(row["CholesterolContent"])
-                if not pd.isna(row["CholesterolContent"])
-                else "No Cholesterol Content Available"
-            ),
-            "sodium_content": (
-                str(row["SodiumContent"])
-                if not pd.isna(row["SodiumContent"])
-                else "No Sodium Content Available"
-            ),
-            "carbohydrate_content": (
-                str(row["CarbohydrateContent"])
-                if not pd.isna(row["CarbohydrateContent"])
-                else "No Carbohydrate Content Available"
-            ),
-            "sugar_content": (
-                str(row["SugarContent"])
-                if not pd.isna(row["SugarContent"])
-                else "No Sugar Content Available"
-            ),
-            "protein_content": (
-                str(row["ProteinContent"])
-                if not pd.isna(row["ProteinContent"])
-                else "No Protein Content Available"
-            ),
-            "recipe_servings": (
-                str(row["RecipeServings"])
-                if not pd.isna(row["RecipeServings"])
-                else "No Servings Information Available"
-            ),
-            "recipe_yield": (
-                str(row["RecipeYield"])
-                if not pd.isna(row["RecipeYield"])
-                else "No Yield Information Available"
+                row["ReviewCount"] if row["ReviewCount"] else "No Reviews Available"
             ),
         }
 
-        # Use Combined_Features_Clean for the document content
-        text = str(row["Combined_Features_Clean"])
-        doc = Document(page_content=text, metadata=metadata)
+        # List of fields to be included in the document content
+        content_field = (
+            row["Combined_Features"]
+            if row["Combined_Features"]
+            else "No Content Available"
+        )
+
+        # Create the document content using the combined features field
+        doc = Document(page_content=content_field, metadata=metadata)
         documents.append(doc)
 
     return documents
@@ -159,9 +110,9 @@ def initialize_documents(max_document_count=None):
 def initialize_vector_db():
     # Use this when developing to more quickly load
     # to avoid waiting for all 500,000+ documents
-    documents = initialize_documents(max_document_count=1000)
+    # documents = initialize_documents(max_document_count=100)
 
-    # documents = initialize_documents()
+    documents = initialize_documents()
 
     logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
@@ -195,8 +146,17 @@ def handle_vector_db_queries(queries, retriever):
 # Converts a list of document objects into a string with its metadata
 def format_docs(docs):
     formatted_docs = []
-    for doc in docs:
-        formatted_docs.append(f"Metadata: {doc.metadata}\n")
-    content = "\n\n".join(formatted_docs)
+    excluded_columns = ["name", "recipe_category", "description"]
 
+    for doc in docs:
+        doc_content = doc.page_content
+        metadata_content = "\n".join(
+            f"{key}: {value}"
+            for key, value in doc.metadata.items()
+            if key not in excluded_columns and value != "No Data Available"
+        )
+        formatted_doc = f"{doc_content}\n\nMetadata:\n{metadata_content}"
+        formatted_docs.append(formatted_doc)
+
+    content = "\n\n---\n\n".join(formatted_docs)
     return content
