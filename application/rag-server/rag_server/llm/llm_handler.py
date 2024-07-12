@@ -3,8 +3,8 @@ import logging
 
 import boto3
 
-from rag_server.constants import MODEL_ID
-from rag_server.data_utils import (
+from constants import MODEL_ID
+from data_utils import (
     format_docs,
     handle_vector_db_queries,
     initialize_vector_db,

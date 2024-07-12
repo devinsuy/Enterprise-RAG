@@ -7,7 +7,7 @@ import pandas as pd
 from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Qdrant
 
 logger = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ def initialize_documents(max_document_count=None):
 def initialize_vector_db():
     # Use this when developing to more quickly load
     # to avoid waiting for all 500,000+ documents
-    # documents = initialize_documents(max_document_count=100)
+    # documents = initialize_documents(max_document_count=10)
 
     documents = initialize_documents()
 
