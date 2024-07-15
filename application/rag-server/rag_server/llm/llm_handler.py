@@ -2,13 +2,9 @@ import json
 import logging
 
 import boto3
-
 from constants import MODEL_ID
-from data_utils import (
-    format_docs,
-    handle_vector_db_queries,
-    initialize_vector_db,
-)
+from data_utils import (format_docs, handle_vector_db_queries,
+                        initialize_vector_db)
 
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt

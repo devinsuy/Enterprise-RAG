@@ -2,14 +2,8 @@ import logging
 from datetime import datetime
 
 import uvicorn
-from api_types import (
-    ChatHistoryResponse,
-    ChatRequest,
-    DocsQueryRequest,
-    DocsQueryResponse,
-    DocumentResponse,
-    PromptFnCalls,
-)
+from api_types import (ChatHistoryResponse, ChatRequest, DocsQueryRequest,
+                       DocsQueryResponse, DocumentResponse, PromptFnCalls)
 from data_utils import handle_vector_db_queries, init_data_utils
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -104,8 +98,7 @@ def init_server():
 # Allow running of app from direct python invocation
 if __name__ == "__main__":
     init_server()
-    from llm.llm_handler import (
-        document_retriever,
-    )  # Only import retriever after it's defined
+    from llm.llm_handler import \
+        document_retriever  # Only import retriever after it's defined
 
     uvicorn.run(app, host="0.0.0.0", port=8000)

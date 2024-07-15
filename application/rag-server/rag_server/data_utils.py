@@ -7,8 +7,8 @@ import pandas as pd
 from constants import BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Qdrant
+from langchain_huggingface import HuggingFaceEmbeddings
 
 logger = logging.getLogger(__name__)
 store = None
