@@ -2,10 +2,10 @@ import json
 import logging
 
 import boto3
-from constants import MODEL_ID
+from constants import MODEL_ID, RETRIEVAL_CHAIN
 from data_utils import (format_docs, handle_vector_db_queries,
                         initialize_vector_db)
-from retrieval_utils import initialize_retrieval_chain
+from retrieval_utils import initialize_retrieval_models, initialize_retrieval_chain
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
 from .tools import recipe_db_query_tool
@@ -21,9 +21,15 @@ def init_llm_handler():
     global document_retriever
     global bedrock_client
 
-    document_retriever = initialize_vector_db()
-    # retriever_init = initialize_vector_db()
-    # document_retriever = initialize_retrieval_chain(retriever_init)
+    if RETRIEVAL_CHAIN:
+        logger.info("Retriever in use: retrieval_chain")
+        coarse_retriever = initialize_vector_db()
+        self_query_llm, fine_search_retriever = initialize_retrieval_models()
+        document_retriever = initialize_retrieval_chain(coarse_retriever, self_query_llm, fine_search_retriever)
+    else:
+        logger.info("Retriever in use: coarse_retriever")
+        document_retriever = initialize_vector_db()
+
     bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 

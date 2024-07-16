@@ -5,12 +5,11 @@ import os
 import boto3
 import pandas as pd
 from constants import (BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY, COARSE_SEARCH_TYPE,
-                       COARSE_SEARCH_KWARGS, SELF_QUERY_MODEL)
+                       COARSE_SEARCH_KWARGS)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import Qdrant
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_openai import ChatOpenAI
 
 logger = logging.getLogger(__name__)
 store = None
@@ -135,35 +134,6 @@ def initialize_vector_db():
 
     return retriever
 
-# def initialize_retrieval_chain():
-#
-#     retriever = initialize_vector_db()
-#
-#     global self_query_llm
-#     global fine_search
-#     global retrieval_chain
-#
-#     logger.info("Initializing retrieval chain")
-#     self_query_llm = ChatOpenAI(
-#         model=SELF_QUERY_MODEL,
-#         temperature=0,
-#         openai_api_key=OPENAI_API_KEY,
-#     )
-#     reranker_model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
-#     fine_search = CrossEncoderReranker(model=reranker_model, top_n=1)
-#
-#     retrieval_chain = (
-#         RunnableMap(
-#             {"documents": retriever,
-#              "self_query_llm": self_query_llm,
-#              "query": RunnablePassthrough()}
-#         )
-#         | self_query_wrapper
-#         | fine_search_wrapper
-#     )
-#     logger.info("Successfully initialized retrieval chain")
-#
-#     return retrieval_chain
 
 # Executes a list of queries and returns a list of document results
 def handle_vector_db_queries(queries, retriever):

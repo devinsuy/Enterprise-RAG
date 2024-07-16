@@ -11,6 +11,9 @@ COARSE_SEARCH_TYPE = "mmr"
 COARSE_SEARCH_KWARGS = {"k": 20, 'lambda_mult': 0.5}
 
 
+# Retriever type
+RETRIEVAL_CHAIN=True
+
 # Self-query llm config
 ## Potentially make this dynamically generated based on metadata fields called
 SELF_QUERY_MODEL = 'gpt-4o'
