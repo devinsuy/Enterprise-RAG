@@ -18,6 +18,17 @@ Before answering, follow these requirements:
 Provide a response to the user prompt about food with recommended recipes and instructions.
 """
 
+self_query_sys_prompt = """
+system: You are a helpful assistant and expert in cooking recipes.
+You are evaluating recipe information for consistency of the user query.
+
+Please retrieve documents that DO NOT violate the following:
+- dietary restrictions
+- allergies
+- any requirements dictated by the user.
+
+"""
+
 test_query_1 = """
 I enjoy asian fusion food and I am a vegetarian. 
 Give me one recipe with ingredients and instructions

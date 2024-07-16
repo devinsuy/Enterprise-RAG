@@ -116,7 +116,7 @@ def initialize_vector_db():
     # documents = initialize_documents()
 
     logger.info("Loading embedding model")
-    global embedding_model # needed for intermediate vector store in retrieval_chain
+    # global embedding_model # needed for intermediate vector store in retrieval_chain
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
 
     # Update references

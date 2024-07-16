@@ -22,10 +22,10 @@ def init_llm_handler():
     global bedrock_client
 
     if RETRIEVAL_CHAIN:
-        logger.info("Retriever in use: retrieval_chain")
+        logger.info("Retriever selected: retrieval_chain")
         coarse_retriever = initialize_vector_db()
-        self_query_llm, fine_search_retriever = initialize_retrieval_models()
-        document_retriever = initialize_retrieval_chain(coarse_retriever, self_query_llm, fine_search_retriever)
+        self_query_llm, fine_retriever = initialize_retrieval_models()
+        document_retriever = initialize_retrieval_chain(coarse_retriever, self_query_llm, fine_retriever)
     else:
         logger.info("Retriever in use: coarse_retriever")
         document_retriever = initialize_vector_db()
