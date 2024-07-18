@@ -90,6 +90,10 @@ def self_query_wrapper(dict):
 def fine_search_wrapper(dict):
     # Expects chained pass of dict {query: "", documents: ""}
     # dependent on global variable fine_retriever
+    if dict['documents'] == []:
+        logger.info("No documents provided to fine-search. Passing empty list to bedrock llm")
+        return ['']
+
     documents_found = fine_retriever.compress_documents(query=dict['query'],
                                    documents=dict['documents'])
     logger.info(f"Document returned: {[doc.metadata['name'] for doc in documents_found]}")

@@ -98,6 +98,9 @@ async def run_test_prompts(file_name: str):
                              aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
                              aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
 
+    if len(test_query_dict) == 0:
+        raise HTTPException(status_code=500, detail="No test queries provided. Check 'prompts.py'")
+    
     to_save = {}
     for key, query in test_query_dict.items():
         to_save[key] = {"query": query, "response": ""}
