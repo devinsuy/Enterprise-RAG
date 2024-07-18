@@ -2,10 +2,10 @@ import json
 import logging
 
 import boto3
-from constants import MODEL_ID, RETRIEVAL_CHAIN
+from constants import MODEL_ID, RETRIEVER
 from data_utils import (format_docs, handle_vector_db_queries,
                         initialize_vector_db)
-from retrieval_utils import initialize_retrieval_models, initialize_retrieval_chain
+from retrieval_utils import intialize_reranker, initialize_retrieval_chain
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
 from .tools import recipe_db_query_tool
@@ -20,15 +20,25 @@ bedrock_client = None
 def init_llm_handler():
     global document_retriever
     global bedrock_client
-
-    if RETRIEVAL_CHAIN:
+    if RETRIEVER == 'self_query_chain':
         logger.info("Retriever selected: retrieval_chain")
         coarse_retriever = initialize_vector_db()
-        self_query_llm, fine_retriever = initialize_retrieval_models()
-        document_retriever = initialize_retrieval_chain(coarse_retriever, self_query_llm, fine_retriever)
-    else:
-        logger.info("Retriever in use: coarse_retriever")
+        document_retriever = initialize_retrieval_chain(coarse_retriever)
+
+    elif RETRIEVER == 'reranker':
+        logger.info("Retriever in use: reranker")
+        coarse_retriever = initialize_vector_db()
+        document_retriever = intialize_reranker(coarse_retriever)
+
+    elif RETRIEVER == 'coarse':
+        logger.info("Retriever in use: coarse")
         document_retriever = initialize_vector_db()
+
+    else:
+        raise ValueError("Invalid retriever selected - In constants.py set RETRIEVER"
+                         "to one of the following:\n"
+                         "\t'coarse', 'reranker', or 'self_query_chain'")
+
 
     bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 

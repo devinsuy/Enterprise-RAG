@@ -1,9 +1,11 @@
 import logging
+import os
 from datetime import datetime
 
 import uvicorn
 from api_types import (ChatHistoryResponse, ChatRequest, DocsQueryRequest,
-                       DocsQueryResponse, DocumentResponse, PromptFnCalls)
+                       DocsQueryResponse, DocumentResponse, PromptFnCalls,
+                       TestQueriesRequest)
 from data_utils import handle_vector_db_queries, init_data_utils
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -86,7 +88,30 @@ async def query_documents(request: DocsQueryRequest):
         return DocsQueryResponse(documents=serialized_docs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+@app.post("/api/v1/recipes/test_queries")
+async def run_test_prompts(file_name: str):
+    from llm.prompts import test_query_dict
+    import boto3
+    import json
 
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+                             aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
+
+    to_save = {}
+    for key, query in test_query_dict.items():
+        to_save[key] = {"query": query, "response": ""}
+        request = ChatRequest(existing_chat_history=[], prompt=query)
+
+        response = await generate_message(request)
+        to_save[key]['response'] = response.llm_response_text
+
+    try:
+        file_content = json.dumps(to_save)
+        s3_client.put_object(Bucket='test-api-results', Key=file_name,
+                             Body=file_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving to S3: {e}")
 
 def init_server():
     logger.info("Running server initialization ...")

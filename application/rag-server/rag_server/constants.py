@@ -6,17 +6,26 @@ BUCKET_NAME = "recipes-rag"
 FILE_KEY = "recipes_w_cleaning_time_combined_features.parquet"
 DOWNLOAD_PATH = "data"
 
-# Store Retrieval Config
+
+# Qdrant Store
+MAX_DOC_COUNT = 40
+
+# Retriever type
+RETRIEVER='self_query_chain' #options: coarse, reranker, self_query_chain
+
+# Coarse Retriever Config
 COARSE_SEARCH_TYPE = "mmr"
 COARSE_SEARCH_KWARGS = {"k": 20, 'lambda_mult': 0.5}
 
-
-# Retriever type
-RETRIEVAL_CHAIN=True
+# Reranker Config
+RERANKER_TOP_N = 1
 
 # Self-query llm config
 ## Potentially make this dynamically generated based on metadata fields called
+SELF_QUERY_API = 'OpenAI' # OpenAI or Azure
 SELF_QUERY_MODEL = 'gpt-4o'
+DOCUMENT_CONTENT_DESCRIPTION = "Detailed information about a recipe"
+
 METADATA_FIELD_INFO = [
     AttributeInfo(
         name="name",
@@ -60,4 +69,3 @@ METADATA_FIELD_INFO = [
     ),
 ]
 
-DOCUMENT_CONTENT_DESCRIPTION = "Detailed information about a recipe"

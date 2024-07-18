@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from constants import (BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY, COARSE_SEARCH_TYPE,
-                       COARSE_SEARCH_KWARGS)
+                       COARSE_SEARCH_KWARGS, MAX_DOC_COUNT)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import Qdrant
@@ -111,9 +111,7 @@ def initialize_documents(max_document_count=None):
 def initialize_vector_db():
     # Use this when developing to more quickly load
     # to avoid waiting for all 500,000+ documents
-    documents = initialize_documents(max_document_count=40)
-
-    # documents = initialize_documents()
+    documents = initialize_documents(max_document_count=MAX_DOC_COUNT)
 
     logger.info("Loading embedding model")
     # global embedding_model # needed for intermediate vector store in retrieval_chain
