@@ -79,18 +79,35 @@ def self_query_message_prompt(user_prompt):
 
 def self_query_wrapper(dict):
     # dependent on global variable self_query_llm
-    self_query_retriever = SelfQueryRetriever.from_llm(
-        self_query_llm,
-        filtered_qdrant_store(dict['documents']),
-        document_contents=DOCUMENT_CONTENT_DESCRIPTION,
-        metadata_field_info=METADATA_FIELD_INFO,
-        use_original_query=False,
-        enable_limit=True,
-        verbose=True
-    )
-
     prompt = self_query_message_prompt(dict['query'])
-    documents = self_query_retriever.invoke(prompt)
+    temp_store = filtered_qdrant_store(dict['documents'])
+
+    # been having an issue where the self_query_llm makes up metadata fields and attributes
+    try:
+        self_query_retriever = SelfQueryRetriever.from_llm(
+            self_query_llm,
+            temp_store,
+            document_contents=DOCUMENT_CONTENT_DESCRIPTION,
+            metadata_field_info=METADATA_FIELD_INFO,
+            use_original_query=False,
+            enable_limit=False,
+            verbose=True
+        )
+        documents = self_query_retriever.invoke(prompt)
+    except Exception as e:
+        logger.error(f"Error while invoking SelfQueryRetriever: {e}")
+        logger.warning(f"Forcing SelfQueryRetriever to NOT generate filters")
+        self_query_retriever_no_meta = SelfQueryRetriever.from_llm(
+            self_query_llm,
+            temp_store,
+            document_contents=DOCUMENT_CONTENT_DESCRIPTION,
+            metadata_field_info=[],
+            use_original_query=False,
+            enable_limit=False,
+            verbose=True
+        )
+        documents = self_query_retriever_no_meta.invoke(prompt)
+
     logger.info(f"Coarse search: {COARSE_SEARCH_KWARGS['k']} docs\nSelf query: {len(documents)} docs")
     logger.info(f"Titles: {[doc.metadata['name'] for doc in documents]}")
     return {"documents": documents,

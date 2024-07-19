@@ -20,20 +20,21 @@ google_search_query_saved = """
 - If you encounter a query related to ingredient substitutions, preparation techniques, nutritional information, or other specific knowledge not contained within the recipe database, make a call to the google_web_search function to look up relevant information.
 """
 
-self_query_sys_prompt = """
-system: You are a helpful assistant and expert in cooking recipes.
-You are evaluating recipe information for consistency of the user query.
-
-Please retrieve documents that DO NOT violate the following:
-- user dietary restrictions
-- user allergies
-- any requirements dictated by the user.
-
-You may use the following metadata fields for constructing filters:
-'name', 'description', 'recipe_category', 'keywords', 'recipe_ingredient_parts', 'recipe_instructions', 'aggregated_rating', 'review_count'
-NEVER create a filter that is not one of the above attributes.
-
-"""
+self_query_sys_prompt = """"""
+# self_query_sys_prompt = """
+# system: You are a helpful assistant and expert in cooking recipes.
+# You are evaluating recipe information for consistency of the user query.
+#
+# Please retrieve documents that DO NOT violate the following:
+# - user dietary restrictions
+# - user allergies
+# - any requirements dictated by the user.
+#
+# You may use the following metadata fields for constructing filters:
+# 'name', 'description', 'recipe_category', 'keywords', 'recipe_ingredient_parts', 'recipe_instructions', 'aggregated_rating', 'review_count'
+# NEVER create a filter that is not one of the above attributes.
+#
+# """
 # Self retriever llm
 from langchain.chains.query_constructor.base import AttributeInfo
 DOCUMENT_CONTENT_DESCRIPTION = "Detailed information about a recipe"

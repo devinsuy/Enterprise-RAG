@@ -106,7 +106,7 @@ async def run_test_prompts(file_name: str):
         to_save = {}
         for key, query in test_query_dict.items():
 
-            to_save[key] = {"query": query, "response": "", "config": {}}
+            to_save[key] = {"query": query, "response": ""}
 
             request = ChatRequest(existing_chat_history=[], prompt=query)
             response = await generate_message(request)
@@ -115,7 +115,7 @@ async def run_test_prompts(file_name: str):
     except Exception as e:
         to_save[key]['response'] = f"Error occurred during generation: {e}"
 
-    to_save[key]['config'] = config_test_dict
+    to_save['config'] = config_test_dict
 
     try:
         file_content = json.dumps(to_save)
