@@ -91,6 +91,7 @@ async def query_documents(request: DocsQueryRequest):
 @app.post("/api/v1/recipes/test_queries")
 async def run_test_prompts(file_name: str):
     from llm.prompts import test_query_dict
+    from constants import config_test_dict
     import boto3
     import json
 
@@ -112,6 +113,7 @@ async def run_test_prompts(file_name: str):
     except:
         to_save[key]['response'] = "error occurred"
 
+    to_save[key]['config'] = config_test_dict
     try:
         file_content = json.dumps(to_save)
         s3_client.put_object(Bucket='test-api-results', Key=file_name,
