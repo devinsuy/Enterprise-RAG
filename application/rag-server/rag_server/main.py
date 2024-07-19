@@ -91,7 +91,7 @@ async def query_documents(request: DocsQueryRequest):
 @app.post("/api/v1/recipes/test_queries")
 async def run_test_prompts(file_name: str):
     from llm.prompts import test_query_dict
-    from constants import config_test_dict
+    from constants import config_test_dict, BUCKET_NAME_TESTING
     import boto3
     import json
 
@@ -105,18 +105,21 @@ async def run_test_prompts(file_name: str):
 
         to_save = {}
         for key, query in test_query_dict.items():
-            to_save[key] = {"query": query, "response": "", "config": {}}
-            request = ChatRequest(existing_chat_history=[], prompt=query)
 
+            to_save[key] = {"query": query, "response": "", "config": {}}
+
+            request = ChatRequest(existing_chat_history=[], prompt=query)
             response = await generate_message(request)
             to_save[key]['response'] = response.llm_response_text
-    except:
-        to_save[key]['response'] = "error occurred"
+
+    except Exception as e:
+        to_save[key]['response'] = f"Error occurred during generation: {e}"
 
     to_save[key]['config'] = config_test_dict
+
     try:
         file_content = json.dumps(to_save)
-        s3_client.put_object(Bucket='test-api-results', Key=file_name,
+        s3_client.put_object(Bucket=BUCKET_NAME_TESTING, Key=file_name,
                              Body=file_content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving to S3: {e}")

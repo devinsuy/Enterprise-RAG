@@ -35,12 +35,17 @@ def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):
         s3.download_file(bucket_name, file_key, file_path)
 
     df = pd.read_parquet(file_path)
+    df = df.dropna(subset=["AggregatedRating"])
+    df = df.dropna(subset=["ReviewCount"])
     return df
 
 
 def create_documents(df):
     df_copy = df.copy(deep=True)
-    df = df.dropna(subset=["AggregatedRating"])
+    # df_copy = df_copy.dropna(subset=["AggregatedRating"])
+    # df_copy = df_copy.dropna(subset=["ReviewCount"])
+    df_copy = df_copy.astype({'AggregatedRating': float, 'ReviewCount': int})
+
     df_copy = df_copy.fillna("")  # Convert NA values to empty strings
     df_copy = df_copy.astype(str)  # Cast all columns to string
 
@@ -102,6 +107,7 @@ def initialize_documents(max_document_count=None):
         df = df.sample(
             n=max_document_count
         )  # Reduce the number of rows by randomly sampling
+
     documents = create_documents(df)
     logger.info(f"Successfully created {len(documents)} documents")
 
@@ -114,7 +120,6 @@ def initialize_vector_db():
     documents = initialize_documents(max_document_count=MAX_DOC_COUNT)
 
     logger.info("Loading embedding model")
-    # global embedding_model # needed for intermediate vector store in retrieval_chain
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
 
     # Update references
@@ -136,6 +141,8 @@ def initialize_vector_db():
 # Executes a list of queries and returns a list of document results
 def handle_vector_db_queries(queries, retriever):
     context_docs = []
+    if isinstance(queries, str):
+        queries = [queries]
     for query in queries:
         query_results = retriever.invoke(query)
         context_docs.extend(query_results)

@@ -1,9 +1,9 @@
 import os
 import logging
 
-from constants import (DOCUMENT_CONTENT_DESCRIPTION, METADATA_FIELD_INFO,
-                       SELF_QUERY_API, SELF_QUERY_MODEL, COARSE_SEARCH_KWARGS, RERANKER_TOP_N)
-from llm.prompts import self_query_sys_prompt
+from constants import (SELF_QUERY_API, SELF_QUERY_MODEL, COARSE_SEARCH_KWARGS,
+                       RERANKER_TOP_N)
+from llm.prompts import self_query_sys_prompt, DOCUMENT_CONTENT_DESCRIPTION, METADATA_FIELD_INFO
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain_community.vectorstores import Qdrant
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -41,6 +41,7 @@ def initialize_chain_models():
             model=SELF_QUERY_MODEL,
             temperature=0,
             openai_api_key=os.environ.get("OPENAI_API_KEY"),
+            max_retries=3,
         )
     elif SELF_QUERY_API == "Azure":
         self_query_llm = AzureChatOpenAI(
@@ -72,17 +73,25 @@ def filtered_qdrant_store(documents=[]):
     return filtered_qdrant_store
 
 def self_query_message_prompt(user_prompt):
-    string = f"user: {user_prompt}"
-    message = self_query_sys_prompt + string
+    user_prompt = f"user: {user_prompt}"
+    message = [self_query_sys_prompt + user_prompt]
     return message
 
 def self_query_wrapper(dict):
     # dependent on global variable self_query_llm
     self_query_retriever = SelfQueryRetriever.from_llm(
-        self_query_llm, filtered_qdrant_store(dict['documents']), DOCUMENT_CONTENT_DESCRIPTION, METADATA_FIELD_INFO, verbose=True
+        self_query_llm,
+        filtered_qdrant_store(dict['documents']),
+        document_contents=DOCUMENT_CONTENT_DESCRIPTION,
+        metadata_field_info=METADATA_FIELD_INFO,
+        use_original_query=False,
+        enable_limit=True,
+        verbose=True
     )
-    documents = self_query_retriever.invoke(self_query_message_prompt(dict['query']))
-    logger.info(f"Self query with LLM returned {len(documents)} documents out of {COARSE_SEARCH_KWARGS['k']} documents from coarse search")
+
+    prompt = self_query_message_prompt(dict['query'])
+    documents = self_query_retriever.invoke(prompt)
+    logger.info(f"Coarse search: {COARSE_SEARCH_KWARGS['k']} docs\nSelf query: {len(documents)} docs")
     logger.info(f"Titles: {[doc.metadata['name'] for doc in documents]}")
     return {"documents": documents,
             "query": dict['query']}
@@ -92,11 +101,11 @@ def fine_search_wrapper(dict):
     # dependent on global variable fine_retriever
     if dict['documents'] == []:
         logger.info("No documents provided to fine-search. Passing empty list to bedrock llm")
-        return ['']
+        return []
 
     documents_found = fine_retriever.compress_documents(query=dict['query'],
                                    documents=dict['documents'])
-    logger.info(f"Document returned: {[doc.metadata['name'] for doc in documents_found]}")
+    logger.info(f"Retrieval complete - document returned: {[doc.metadata['name'] for doc in documents_found]}")
 
     return documents_found
 

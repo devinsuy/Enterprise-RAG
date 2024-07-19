@@ -7,8 +7,6 @@ Before answering, follow these requirements:
 
 - NEVER exceed a MAXIMUM of 3 calls to the query_food_recipe_vector_db function.
 
-- If you encounter a query related to ingredient substitutions, preparation techniques, nutritional information, or other specific knowledge not contained within the recipe database, make a call to the google_web_search function to look up relevant information.
-
 - Do not use the google_web_search function to look up entire recipes. It should only be used for supplementary information not found in the recipe database.
 
 - Analyze the user's requirements and NEVER provide a recipe that violates ANY of the user's requirements.
@@ -16,6 +14,10 @@ Before answering, follow these requirements:
 - In your final response, NEVER include any XML tags with information about your thoughts. It is okay to include XML and analysis text in any message except your final one with the recipes and instructions.
 
 Provide a response to the user prompt about food with recommended recipes and instructions.
+"""
+
+google_search_query_saved = """
+- If you encounter a query related to ingredient substitutions, preparation techniques, nutritional information, or other specific knowledge not contained within the recipe database, make a call to the google_web_search function to look up relevant information.
 """
 
 self_query_sys_prompt = """
@@ -27,12 +29,66 @@ Please retrieve documents that DO NOT violate the following:
 - user allergies
 - any requirements dictated by the user.
 
-"""
+You may use the following metadata fields for constructing filters:
+'name', 'description', 'recipe_category', 'keywords', 'recipe_ingredient_parts', 'recipe_instructions', 'aggregated_rating', 'review_count'
+NEVER create a filter that is not one of the above attributes.
 
-# test_query_1 = """
-# I enjoy asian fusion food and I am a vegetarian.
-# Give me one recipe with ingredients and instructions
+"""
+# Self retriever llm
+from langchain.chains.query_constructor.base import AttributeInfo
+DOCUMENT_CONTENT_DESCRIPTION = "Detailed information about a recipe"
+
+METADATA_FIELD_INFO = [
+    AttributeInfo(
+        name="name",
+        description="The name of the recipe",
+        type="string",
+    ),
+    AttributeInfo(
+        name="description",
+        description="A brief description of the recipe",
+        type="string",
+    ),
+    AttributeInfo(
+        name="recipe_category",
+        description="The category of the recipe, such as 'Quick Breads', 'Desserts', etc.",
+        type="string",
+    ),
+    AttributeInfo(
+        name="keywords",
+        description="Keywords associated with the recipe",
+        type="string",
+    ),
+    AttributeInfo(
+        name="recipe_ingredient_parts",
+        description="The ingredients required for the recipe",
+        type="string",
+    ),
+    AttributeInfo(
+        name="recipe_instructions",
+        description="The instructions to prepare the recipe",
+        type="string",
+    ),
+    AttributeInfo(
+        name="aggregated_rating",
+        description="The aggregated rating for the recipe",
+        type="float",
+    ),
+    AttributeInfo(
+        name="review_count",
+        description="The number of reviews for the recipe",
+        type="integer",
+    ),
+]
+
+# test_query_testing1 = """
+# Pizza
 # """
+
+test_query_1 = """
+I enjoy asian fusion food and I am a vegetarian.
+Give me one recipe with ingredients and instructions
+"""
 
 test_query_2 = """
 I have a peanut allergy but I like thai food.
@@ -45,33 +101,33 @@ Suggest a low-carb breakfast recipe that includes eggs and spinach,
 can be prepared in under 20 minutes,
 and is suitable for a keto diet.
 """
-#
-# test_query_4 = """
-# Suggest a healthy dinner recipe for two people that includes fish,
-# is under 500 calories per serving,
-# and can be made in less than 40 minutes.
-# """
-#
-# test_query_5 = """
-# I am on a ketogenic diet and need a dinner recipe that is dairy-free,
-# low in sodium, and takes less than an hour to cook.
-# """
-#
-# test_query_6 = """
-# I'm looking for a pescatarian main course that is low in saturated fat,
-# uses Asian flavors, and can be prepared in under 45 minutes.
-# """
-#
-# test_query_7 = """
-# I need a diabetic-friendly, vegan breakfast recipe that is gluten-free,
-# nut-free, and low in cholesterol, but also rich in omega-3 fatty acids
-# and can be prepared the night before.
-# """
-#
-# test_query_8 = """
-# I am following a strict paleo diet and need a lunch recipe that is dairy-free,
-# gluten-free, low in carbs, and low in sodium. Additionally, it should be rich in antioxidants,
-# and can be made in under 30 minutes with minimal cooking equipment.
-# """
+
+test_query_4 = """
+Suggest a healthy dinner recipe for two people that includes fish,
+is under 500 calories per serving,
+and can be made in less than 40 minutes.
+"""
+
+test_query_5 = """
+I am on a ketogenic diet and need a dinner recipe that is dairy-free,
+low in sodium, and takes less than an hour to cook.
+"""
+
+test_query_6 = """
+I'm looking for a pescatarian main course that is low in saturated fat,
+uses Asian flavors, and can be prepared in under 45 minutes.
+"""
+
+test_query_7 = """
+I need a diabetic-friendly, vegan breakfast recipe that is gluten-free,
+nut-free, and low in cholesterol, but also rich in omega-3 fatty acids
+and can be prepared the night before.
+"""
+
+test_query_8 = """
+I am following a strict paleo diet and need a lunch recipe that is dairy-free,
+gluten-free, low in carbs, and low in sodium. Additionally, it should be rich in antioxidants,
+and can be made in under 30 minutes with minimal cooking equipment.
+"""
 
 test_query_dict = {var: eval(var) for var in dir() if "test_query_" in var}
