@@ -8,7 +8,7 @@ DOWNLOAD_PATH = "data"
 
 
 # Qdrant Store
-MAX_DOC_COUNT = 40
+MAX_DOC_COUNT = 60
 
 # Retriever type
 RETRIEVER='self_query_chain' #options: coarse, reranker, self_query_chain
@@ -69,3 +69,4 @@ METADATA_FIELD_INFO = [
     ),
 ]
 
+config_test_dict = {var: eval(var) for var in dir() if not var.startswith('__')}

@@ -94,20 +94,23 @@ async def run_test_prompts(file_name: str):
     import boto3
     import json
 
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-                             aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
+    try:
+        s3_client = boto3.client('s3',
+                                 aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+                                 aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
 
-    if len(test_query_dict) == 0:
-        raise HTTPException(status_code=500, detail="No test queries provided. Check 'prompts.py'")
-    
-    to_save = {}
-    for key, query in test_query_dict.items():
-        to_save[key] = {"query": query, "response": ""}
-        request = ChatRequest(existing_chat_history=[], prompt=query)
+        if len(test_query_dict) == 0:
+            raise HTTPException(status_code=500, detail="No test queries provided. Check 'prompts.py'")
 
-        response = await generate_message(request)
-        to_save[key]['response'] = response.llm_response_text
+        to_save = {}
+        for key, query in test_query_dict.items():
+            to_save[key] = {"query": query, "response": "", "config": {}}
+            request = ChatRequest(existing_chat_history=[], prompt=query)
+
+            response = await generate_message(request)
+            to_save[key]['response'] = response.llm_response_text
+    except:
+        to_save[key]['response'] = "error occurred"
 
     try:
         file_content = json.dumps(to_save)

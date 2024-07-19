@@ -40,11 +40,11 @@ I also don't enjoy spicy food much, and want a meal with low carbs.
 Give a recipe with ingredients and instructions
 """
 
-# test_query_3 = """
-# Suggest a low-carb breakfast recipe that includes eggs and spinach,
-# can be prepared in under 20 minutes,
-# and is suitable for a keto diet.
-# """
+test_query_3 = """
+Suggest a low-carb breakfast recipe that includes eggs and spinach,
+can be prepared in under 20 minutes,
+and is suitable for a keto diet.
+"""
 #
 # test_query_4 = """
 # Suggest a healthy dinner recipe for two people that includes fish,
