@@ -37,6 +37,7 @@ self_query_sys_prompt = """"""
 # """
 # Self retriever llm
 from langchain.chains.query_constructor.base import AttributeInfo
+
 DOCUMENT_CONTENT_DESCRIPTION = "Detailed information about a recipe"
 
 METADATA_FIELD_INFO = [

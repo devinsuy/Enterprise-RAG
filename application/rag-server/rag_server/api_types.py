@@ -81,6 +81,6 @@ class DocumentResponse(BaseModel):
 class DocsQueryResponse(BaseModel):
     documents: List[DocumentResponse]
 
+
 class TestQueriesRequest(BaseModel):
     test_queries: List[str]
-

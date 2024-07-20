@@ -88,20 +88,27 @@ async def query_documents(request: DocsQueryRequest):
         return DocsQueryResponse(documents=serialized_docs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/v1/recipes/test_queries")
 async def run_test_prompts(file_name: str):
-    from llm.prompts import test_query_dict
-    from constants import config_test_dict, BUCKET_NAME_TESTING
-    import boto3
     import json
 
+    import boto3
+    from constants import BUCKET_NAME_TESTING, config_test_dict
+    from llm.prompts import test_query_dict
+
     try:
-        s3_client = boto3.client('s3',
-                                 aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-                                 aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        )
 
         if len(test_query_dict) == 0:
-            raise HTTPException(status_code=500, detail="No test queries provided. Check 'prompts.py'")
+            raise HTTPException(
+                status_code=500, detail="No test queries provided. Check 'prompts.py'"
+            )
 
         to_save = {}
         for key, query in test_query_dict.items():
@@ -110,19 +117,21 @@ async def run_test_prompts(file_name: str):
 
             request = ChatRequest(existing_chat_history=[], prompt=query)
             response = await generate_message(request)
-            to_save[key]['response'] = response.llm_response_text
+            to_save[key]["response"] = response.llm_response_text
 
     except Exception as e:
-        to_save[key]['response'] = f"Error occurred during generation: {e}"
+        to_save[key]["response"] = f"Error occurred during generation: {e}"
 
-    to_save['config'] = config_test_dict
+    to_save["config"] = config_test_dict
 
     try:
         file_content = json.dumps(to_save)
-        s3_client.put_object(Bucket=BUCKET_NAME_TESTING, Key=file_name,
-                             Body=file_content)
+        s3_client.put_object(
+            Bucket=BUCKET_NAME_TESTING, Key=file_name, Body=file_content
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving to S3: {e}")
+
 
 def init_server():
     logger.info("Running server initialization ...")
