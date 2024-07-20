@@ -20,7 +20,7 @@ RERANKER_TOP_N = 1
 # Self-query llm config
 ## Potentially make this dynamically generated based on metadata fields called
 SELF_QUERY_API = 'OpenAI' # OpenAI or Azure
-SELF_QUERY_MODEL = 'gpt-4o'
+SELF_QUERY_MODEL = 'gpt-4o-mini'
 
 # for configuration information during testing
 BUCKET_NAME_TESTING = "test-api-results"
