@@ -5,7 +5,7 @@ import os
 import boto3
 import pandas as pd
 from constants import (BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY, COARSE_SEARCH_TYPE,
-                       COARSE_SEARCH_KWARGS, MAX_DOC_COUNT)
+                       COARSE_LAMBDA, COARSE_TOP_K, MAX_DOC_COUNT)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import Qdrant
@@ -132,7 +132,7 @@ def initialize_vector_db():
         embedding_model,
         location=":memory:",
     )
-    retriever = store.as_retriever(search_type=COARSE_SEARCH_TYPE, search_kwargs=COARSE_SEARCH_KWARGS)
+    retriever = store.as_retriever(search_type=COARSE_SEARCH_TYPE, search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA})
     logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
     return retriever

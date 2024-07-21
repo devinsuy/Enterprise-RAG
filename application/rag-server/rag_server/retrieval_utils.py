@@ -1,7 +1,7 @@
 import logging
 import os
 
-from constants import (COARSE_SEARCH_KWARGS, RERANKER_TOP_N, SELF_QUERY_API,
+from constants import (COARSE_TOP_K, RERANKER_TOP_N, SELF_QUERY_API,
                        SELF_QUERY_MODEL)
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
@@ -115,7 +115,7 @@ def self_query_wrapper(dict):
         documents = self_query_retriever_no_meta.invoke(prompt)
 
     logger.info(
-        f"Coarse search: {COARSE_SEARCH_KWARGS['k']} docs\nSelf query: {len(documents)} docs"
+        f"Coarse search: {COARSE_TOP_K} docs, Self query: {len(documents)} docs"
     )
     logger.info(f"Titles: {[doc.metadata['name'] for doc in documents]}")
     return {"documents": documents, "query": dict["query"]}

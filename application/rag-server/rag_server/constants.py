@@ -14,7 +14,8 @@ RETRIEVER = "self_query_chain"  # options: coarse, reranker, self_query_chain
 
 # Coarse Retriever Config
 COARSE_SEARCH_TYPE = "mmr"
-COARSE_SEARCH_KWARGS = {"k": 5, "lambda_mult": 0.5}
+COARSE_TOP_K = 5
+COARSE_LAMBDA = 0.5
 
 # Reranker Config
 RERANKER_TOP_N = 1
