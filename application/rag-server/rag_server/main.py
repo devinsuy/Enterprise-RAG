@@ -88,34 +88,34 @@ async def query_documents(request: DocsQueryRequest):
         return DocsQueryResponse(documents=serialized_docs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/v1/recipes/test_queries")
 async def run_test_prompts(file_name: str):
-    from constants import config_test_dict, BUCKET_NAME_TESTING
-    import boto3
     import json
+
+    import boto3
+    from constants import BUCKET_NAME_TESTING, config_test_dict
 
     # load test set
     f = open("../tests/test_queries.json")
     test_set = json.load(f)
     if len(test_set) == 0:
-        raise HTTPException(status_code=500,
-                            detail="No test queries provided. Check 'test_queries.json' in test folder")
+        raise HTTPException(
+            status_code=500,
+            detail="No test queries provided. Check 'test_queries.json' in test folder",
+        )
     # load S3 client
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=os.environ.get(
-                                 'AWS_ACCESS_KEY_ID'),
-                             aws_secret_access_key=os.environ.get(
-                                 'AWS_SECRET_ACCESS_KEY'))
-
-
-
-
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    )
 
     to_save = {}
     for key, query in test_set.items():
         # Store question information
-        to_save[f"Entry_{key}"] = {"Query_Question_No": key,
-                                   "Query_Question": query}
+        to_save[f"Entry_{key}"] = {"Query_Question_No": key, "Query_Question": query}
 
         # Generate and store response
         try:
@@ -124,7 +124,6 @@ async def run_test_prompts(file_name: str):
             to_save[f"Entry_{key}"]["Query_Response"] = response.llm_response_text
             # to_save[f"Entry_{key}"]["Query_ChatHistory"] = response.new_chat_history
             # to_save[f"Entry_{key}"]["Query_fnCalls"] = response.fn_calls
-
 
         except Exception as e:
             err = f"Error occurred during generation: {e}"
@@ -142,10 +141,12 @@ async def run_test_prompts(file_name: str):
         # with open(f'{file_name}.pickle', 'wb') as handle:
         #     pickle.dump(to_save, handle, protocol=pickle.HIGHEST_PROTOCOL)
         file_content = json.dumps(to_save)
-        s3_client.put_object(Bucket=BUCKET_NAME_TESTING, Key=file_name,
-                             Body=file_content)
+        s3_client.put_object(
+            Bucket=BUCKET_NAME_TESTING, Key=file_name, Body=file_content
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving to S3: {e}")
+
 
 def init_server():
     logger.info("Running server initialization ...")

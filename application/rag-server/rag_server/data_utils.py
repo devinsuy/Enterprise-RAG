@@ -4,12 +4,15 @@ import os
 
 import boto3
 import pandas as pd
-from constants import (BUCKET_NAME, DOWNLOAD_PATH, FILE_KEY, COARSE_SEARCH_TYPE,
-                       COARSE_LAMBDA, COARSE_TOP_K, MAX_DOC_COUNT)
+from constants import (BUCKET_NAME, COARSE_SEARCH_KWARGS, COARSE_SEARCH_TYPE,
+                       DOWNLOAD_PATH, FILE_KEY, MAX_DOC_COUNT,
+                       QDRANT_COLLECTION_NAME, QDRANT_SNAPSHOT_PATH)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
-from langchain_community.vectorstores import Qdrant
 from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_community.vectorstores import Qdrant
+from langchain_qdrant import Qdrant
+from qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
 store = None
@@ -44,7 +47,7 @@ def create_documents(df):
     df_copy = df.copy(deep=True)
     # df_copy = df_copy.dropna(subset=["AggregatedRating"])
     # df_copy = df_copy.dropna(subset=["ReviewCount"])
-    df_copy = df_copy.astype({'AggregatedRating': float, 'ReviewCount': int})
+    df_copy = df_copy.astype({"AggregatedRating": float, "ReviewCount": int})
 
     df_copy = df_copy.fillna("")  # Convert NA values to empty strings
     df_copy = df_copy.astype(str)  # Cast all columns to string
@@ -95,7 +98,10 @@ def create_documents(df):
 
         # Create the document content using the combined features field
         doc = Document(page_content=content_field, metadata=metadata)
-        documents.append(doc)
+
+        # Skip documents without any content
+        if len(doc.page_content) > 0:
+            documents.append(doc)
 
     return documents
 
@@ -114,10 +120,25 @@ def initialize_documents(max_document_count=None):
     return documents
 
 
-def initialize_vector_db():
+def initialize_vector_db(snapshot_path=QDRANT_SNAPSHOT_PATH):
+    if not snapshot_path or not os.path.exists(snapshot_path):
+        logger.info(
+            f"No db snapshot found at {snapshot_path}, creating document database"
+        )
+        return create_db_instance(snapshot_path)
+    else:
+        logger.info(
+            f"Found existing db snapshot at {snapshot_path}, restoring instance"
+        )
+        return restore_db_instance(snapshot_path)
+
+
+# Create a db instance, computes embeddings and persists to disk
+def create_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
     # Use this when developing to more quickly load
     # to avoid waiting for all 500,000+ documents
-    documents = initialize_documents(max_document_count=MAX_DOC_COUNT)
+    # documents = initialize_documents(max_document_count=MAX_DOC_COUNT)
+    documents = initialize_documents()
 
     logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
@@ -130,10 +151,45 @@ def initialize_vector_db():
     store = Qdrant.from_documents(
         documents,
         embedding_model,
-        location=":memory:",
+        path=QDRANT_SNAPSHOT_PATH,
+        collection_name=QDRANT_COLLECTION_NAME,
     )
-    retriever = store.as_retriever(search_type=COARSE_SEARCH_TYPE, search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA})
+    retriever = store.as_retriever(
+        search_type=COARSE_SEARCH_TYPE,
+        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+    )
     logger.info(f"Successfully initialized document db with {len(documents)} documents")
+
+    return retriever
+
+
+# Reloads a vector db snapshot from disk to avoid
+# recomputing document embeddings
+def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
+    logger.info("Loading embedding model")
+    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
+
+    # Update references
+    global store
+    global retriever
+
+    # Restore snapshot
+    qdrant_client = QdrantClient(path=snapshot_path)
+
+    store = Qdrant(
+        client=qdrant_client,
+        collection_name=QDRANT_COLLECTION_NAME,
+        embeddings=embedding_model,
+    )
+    retriever = store.as_retriever(
+        search_type=COARSE_SEARCH_TYPE, search_kwargs=COARSE_SEARCH_KWARGS
+    )
+    num_docs = qdrant_client.count(
+        collection_name=QDRANT_COLLECTION_NAME, exact=True
+    ).count
+    logger.info(
+        f"Successfully restored document db snapshot from {snapshot_path} with {num_docs} documents"
+    )
 
     return retriever
 
