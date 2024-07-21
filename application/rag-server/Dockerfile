@@ -4,9 +4,9 @@ ARG APP_DIR=/rag_server
 
 RUN apt-get update \
     && apt-get install -y \
-         curl \
-         build-essential \
-         libffi-dev \
+    curl \
+    build-essential \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 ENV POETRY_VERSION=1.8.2
@@ -20,8 +20,7 @@ COPY pyproject.toml poetry.lock ./
 ## Included poetry options argument for dev and prod builds
 RUN python -m venv --copies ${APP_DIR}/venv
 
-## use only main dependencies
-ENV POETRY_OPTIONS="--only main"
+ENV POETRY_OPTIONS="--no-dev"
 RUN . ${APP_DIR}/venv/bin/activate && poetry install $POETRY_OPTIONS
 
 # create deployment stage
@@ -33,6 +32,8 @@ ENV PATH=${APP_DIR}/venv/bin:$PATH
 
 WORKDIR ${APP_DIR}
 COPY . ./
+
+EXPOSE 8000
 
 CMD ["python", "rag_server/main.py"]
 #CMD ["uvicorn", "rag_server.main:app", "--host", "0.0.0.0"]
