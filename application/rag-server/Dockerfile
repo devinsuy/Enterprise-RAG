@@ -10,7 +10,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV POETRY_VERSION=1.8.2
-RUN curl -sSL https://install.python-poetry.org/ | python - --version $POETRY_VERSION
+RUN curl -sSL https://install.python-poetry.org/ | python3.11 - --version $POETRY_VERSION
 ENV PATH=/root/.local/bin:$PATH
 
 WORKDIR ${APP_DIR}
@@ -18,14 +18,18 @@ COPY pyproject.toml poetry.lock ./
 
 # RUN poetry install
 ## Included poetry options argument for dev and prod builds
-RUN python -m venv --copies ${APP_DIR}/venv
+RUN python3.11 -m venv --copies ${APP_DIR}/venv
 
-ENV POETRY_OPTIONS="--no-dev"
+ENV POETRY_OPTIONS="--only main"
 RUN . ${APP_DIR}/venv/bin/activate && poetry install $POETRY_OPTIONS
 
 # create deployment stage
-FROM python:3.11-slim AS run
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04 AS run
 ARG APP_DIR=/rag_server
+
+RUN apt-get update \
+    && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build ${APP_DIR}/venv ${APP_DIR}/venv/
 ENV PATH=${APP_DIR}/venv/bin:$PATH
@@ -33,7 +37,7 @@ ENV PATH=${APP_DIR}/venv/bin:$PATH
 WORKDIR ${APP_DIR}
 COPY . ./
 
-EXPOSE 8000
+EXPOSE 80
 
 CMD ["python", "rag_server/main.py"]
 #CMD ["uvicorn", "rag_server.main:app", "--host", "0.0.0.0"]
