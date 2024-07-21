@@ -1360,6 +1360,25 @@ openai = ">=1.32.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
 [[package]]
+name = "langchain-qdrant"
+version = "0.1.2"
+description = "An integration package connecting Qdrant and LangChain"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "langchain_qdrant-0.1.2-py3-none-any.whl", hash = "sha256:a428cf8a2abdb21641429668dbd446930be3c3863c7aeba6b6a183083f4e3f3a"},
+    {file = "langchain_qdrant-0.1.2.tar.gz", hash = "sha256:d5cdeab7914b36aeb72e74e0c0484c9c998fc3a2e3084f9ed59e9f16cc3c0a74"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.1.52,<0.3"
+pydantic = ">=2.7.4,<3.0.0"
+qdrant-client = ">=1.10.1,<2.0.0"
+
+[package.extras]
+fastembed = ["fastembed (>=0.3.3,<0.4.0)"]
+
+[[package]]
 name = "langchain-text-splitters"
 version = "0.2.2"
 description = "LangChain text splitting utilities"
@@ -3894,4 +3913,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e761c9f6bff6c110e40255c07e833599f8aaede957b4e04fe44691a4a9c74dab"
+content-hash = "704f75070687897ced8509e7b13078fc8691685cd12fb6934b08a24a6ea374f1"

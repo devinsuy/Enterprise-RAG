@@ -4,13 +4,12 @@ import os
 
 import boto3
 import pandas as pd
-from constants import (BUCKET_NAME, COARSE_SEARCH_KWARGS, COARSE_SEARCH_TYPE,
-                       DOWNLOAD_PATH, FILE_KEY, MAX_DOC_COUNT,
+from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
+                       COARSE_TOP_K, DOWNLOAD_PATH, FILE_KEY, MAX_DOC_COUNT,
                        QDRANT_COLLECTION_NAME, QDRANT_SNAPSHOT_PATH)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
-# from langchain_community.vectorstores import Qdrant
 from langchain_qdrant import Qdrant
 from qdrant_client import QdrantClient
 
@@ -182,7 +181,8 @@ def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
         embeddings=embedding_model,
     )
     retriever = store.as_retriever(
-        search_type=COARSE_SEARCH_TYPE, search_kwargs=COARSE_SEARCH_KWARGS
+        search_type=COARSE_SEARCH_TYPE,
+        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
     num_docs = qdrant_client.count(
         collection_name=QDRANT_COLLECTION_NAME, exact=True
