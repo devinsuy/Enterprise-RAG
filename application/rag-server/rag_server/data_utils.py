@@ -6,7 +6,8 @@ import boto3
 import pandas as pd
 from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
                        COARSE_TOP_K, DOWNLOAD_PATH, FILE_KEY, MAX_DOC_COUNT,
-                       QDRANT_COLLECTION_NAME, QDRANT_SNAPSHOT_PATH)
+                       QDRANT_COLLECTION_NAME, QDRANT_S3_PATH,
+                       QDRANT_SNAPSHOT_PATH)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -40,6 +41,40 @@ def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):
     df = df.dropna(subset=["AggregatedRating"])
     df = df.dropna(subset=["ReviewCount"])
     return df
+
+
+def download_s3_folder(bucket_name, s3_folder, local_dir):
+    logger.info(
+        f"Downloading remote directory from bucket {bucket_name}: {s3_folder} to local path: {local_dir}"
+    )
+    s3 = boto3.client("s3")
+
+    # Ensure the local directory exists
+    if not os.path.exists(local_dir):
+        os.makedirs(local_dir)
+        logger.info(f"Created local directory: {local_dir}")
+
+    # List objects within the specified S3 folder
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_folder):
+        if "Contents" in page:
+            for obj in page["Contents"]:
+                # Extract the key name
+                key = obj["Key"]
+                # Remove the prefix and ensure no leading slash
+                relative_path = key[len(s3_folder) :].lstrip("/")
+                # Create the full local path
+                local_path = os.path.join(local_dir, relative_path)
+                local_subdir = os.path.dirname(local_path)
+                if not os.path.exists(local_subdir):
+                    os.makedirs(local_subdir)
+                    logger.info(f"Created subdirectory: {local_subdir}")
+                try:
+                    # Download the file
+                    s3.download_file(bucket_name, key, local_path)
+                    logger.info(f"Downloaded {key} to {local_path}")
+                except PermissionError as e:
+                    logger.error(f"PermissionError: {e}. Cannot write to {local_path}")
 
 
 def create_documents(df):
@@ -120,16 +155,28 @@ def initialize_documents(max_document_count=None):
 
 
 def initialize_vector_db(snapshot_path=QDRANT_SNAPSHOT_PATH):
-    if not snapshot_path or not os.path.exists(snapshot_path):
-        logger.info(
-            f"No db snapshot found at {snapshot_path}, creating document database"
-        )
-        return create_db_instance(snapshot_path)
-    else:
-        logger.info(
-            f"Found existing db snapshot at {snapshot_path}, restoring instance"
-        )
-        return restore_db_instance(snapshot_path)
+    if not os.path.exists(snapshot_path):
+        # Did not find the snapshot locally, try downloading it from S3
+        try:
+            snapshot_local_abs_path = os.path.abspath(snapshot_path)
+            download_s3_folder(BUCKET_NAME, QDRANT_S3_PATH, snapshot_local_abs_path)
+        except Exception as e:
+            logger.error(f"Failed to download remote snapshot: {e}")
+            logger.info(
+                "Could not restore from snapshot, recreating reating document database"
+            )
+            return create_db_instance(snapshot_path)
+
+        # Download didn't throw an error but we still can't find the snapshot locally
+        if not os.path.exists(snapshot_path):
+            logger.info(
+                "Could not restore from snapshot, recreating reating document database"
+            )
+            return create_db_instance(snapshot_path)
+
+    # The snapshot was found, restore it
+    logger.info(f"Found existing db snapshot at {snapshot_path}, restoring instance")
+    return restore_db_instance(snapshot_path)
 
 
 # Create a db instance, computes embeddings and persists to disk

@@ -6,8 +6,9 @@ DOWNLOAD_PATH = "data"
 
 # Qdrant Store
 MAX_DOC_COUNT = 150
-QDRANT_SNAPSHOT_PATH = "qdrant/recipe_db_snapshot"
+QDRANT_SNAPSHOT_PATH = "./qdrant/recipe_db_snapshot"
 QDRANT_COLLECTION_NAME = "recipe_documents"
+QDRANT_S3_PATH = "qdrant/recipe_db_snapshot"
 
 # Retriever type
 RETRIEVER = "self_query_chain"  # options: coarse, reranker, self_query_chain
