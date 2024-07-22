@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Allow local development of client to make CORS requests
+# Allow local development and deployed client app to make CORS requests
 origins = [
     "http://localhost:3000",
+    "https://main.d3juqriobddbo7.amplifyapp.com"
 ]
 
 app.add_middleware(
