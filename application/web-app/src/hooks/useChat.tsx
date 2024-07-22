@@ -61,7 +61,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         },
         {
           headers: {
-            API_KEY,
+            Authorization: API_KEY,
           },
         }
       )
