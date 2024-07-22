@@ -20,8 +20,8 @@ retriever = None
 
 
 def init_data_utils():
-    # Load environment variables from .env file
-    load_dotenv()
+    # No init currently needed but we may need this setup hook in the future
+    pass
 
 
 # Load data from s3
