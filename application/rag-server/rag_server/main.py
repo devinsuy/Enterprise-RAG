@@ -8,7 +8,7 @@ from api_types import (ChatHistoryResponse, ChatRequest, DocsQueryRequest,
                        TestQueriesRequest)
 from data_utils import handle_vector_db_queries, init_data_utils
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from llm.llm_handler import init_llm_handler, run_chat_loop
@@ -45,8 +45,8 @@ app.add_middleware(
 # API key dependency
 # Set an entry in .env for this value
 # All requests the api must pass the key as header
-API_KEY_NAME = "API_KEY"
-API_KEY = os.getenv(API_KEY_NAME)
+API_KEY_NAME = "Authorization"
+API_KEY = os.getenv("API_KEY")
 
 # We would never do this in a real server, but it's convenient in debugging for now
 logger.info(f"Server is configured to expect api key: {API_KEY}")
@@ -54,15 +54,16 @@ logger.info(f"Server is configured to expect api key: {API_KEY}")
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
 
 
-async def get_api_key(api_key_header: str = Depends(api_key_header)):
+async def get_api_key(request: Request, api_key_header: str = Depends(api_key_header)):
     logger.info(f"Received API key: {api_key_header}")
     if api_key_header == API_KEY:
         return api_key_header
     else:
-        logger.warning(f"Invalid API key: {api_key_header}")
+        headers = {k: v for k, v in request.headers.items()}
+        logger.warning(f"Invalid API key: {api_key_header}. Received headers: {headers}")
         raise HTTPException(
             status_code=403,
-            detail=f"Could not validate credentials, was the correct value passed for the {API_KEY_NAME} header?",
+            detail=f"Could not validate credentials, was the correct value passed for the {API_KEY_NAME} header? Received headers: {headers}",
         )
 
 
