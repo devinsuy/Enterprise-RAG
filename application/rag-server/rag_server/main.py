@@ -55,9 +55,11 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
 
 
 async def get_api_key(api_key_header: str = Depends(api_key_header)):
+    logger.info(f"Received API key: {api_key_header}")
     if api_key_header == API_KEY:
         return api_key_header
     else:
+        logger.warning(f"Invalid API key: {api_key_header}")
         raise HTTPException(
             status_code=403,
             detail=f"Could not validate credentials, was the correct value passed for the {API_KEY_NAME} header?",
