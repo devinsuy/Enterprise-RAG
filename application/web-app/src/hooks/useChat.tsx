@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, type ReactNode, type FC } from 'react'
 import { type ChatHistoryResponse, type LLMMessage, type ChatMessage, type PromptFnCalls } from '../types'
 import axios from 'axios'
-import { API_ENDPOINTS } from 'config'
+import { API_ENDPOINTS, API_KEY } from 'config'
 
 interface ChatTab {
   id: number
@@ -53,10 +53,19 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
     }, 750)
 
     try {
-      const response: ChatHistoryResponse = await axios.post(API_ENDPOINTS.chat, {
-        existing_chat_history: tabs[activeTab].chatHistory,
-        prompt: text
-      })
+      const response: ChatHistoryResponse = await axios.post(
+        API_ENDPOINTS.chat,
+        {
+          existing_chat_history: tabs[activeTab].chatHistory,
+          prompt: text,
+        },
+        {
+          headers: {
+            API_KEY,
+          },
+        }
+      )
+
       console.log(JSON.stringify(response))
       const { new_chat_history: newChatHistory, llm_response_text: llmResponseText, fn_calls: fnCalls } = response.data
       const llmMsg = { user: 'LLM', text: llmResponseText, timestamp: getTimeStr() }
