@@ -16,4 +16,4 @@ poetry run python ./initialize_qdrant.py
 
 # Initializes server
 echo "Initializing workers"
-poetry run uvicorn main:app --workers 9 --host 0.0.0.0 --port 8000
+poetry run gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
