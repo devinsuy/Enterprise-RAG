@@ -1,11 +1,12 @@
 #!/bin/bash
 source activate pytorch
+cd /home/ec2-user/Enterprise-RAG/application/rag-server/rag_server
 
-# This path assumes you are at home directory ~
-cd ./Enterprise-RAG/application/rag-server
+# Run the new run.sh script in headless mode with custom log file
+nohup ./run.sh > /home/ec2-user/Enterprise-RAG/application/rag-server/server.log 2>&1 &
 
-# Run server in headless mode
 # Get logs with: tail -f nohup.out
 # Find process with: ps -ef | grep python
 # Kill process with: kill <PID>
-nohup poetry run python rag_server/main.py &
+# Sleep to keep the script running
+sleep infinity

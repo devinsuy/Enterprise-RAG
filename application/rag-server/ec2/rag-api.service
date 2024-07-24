@@ -1,0 +1,15 @@
+# /etc/systemd/system/rag-api.service
+[Unit]
+Description=FastAPI Service
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+ExecStart=/home/ec2-user/run-server.sh
+Restart=always
+RestartSec=210
+Environment="PATH=/home/ec2-user/miniconda3/envs/pytorch/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+[Install]
+WantedBy=multi-user.target
