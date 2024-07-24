@@ -1,38 +1,39 @@
 import json
 import logging
 import os
+import uuid
 
 import boto3
 import pandas as pd
-from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
-                       COARSE_TOP_K, DOWNLOAD_PATH, FILE_KEY, MAX_DOC_COUNT,
-                       QDRANT_COLLECTION_NAME, QDRANT_S3_PATH,
-                       QDRANT_SNAPSHOT_PATH)
+from constants import (
+    BUCKET_NAME,
+    COARSE_LAMBDA,
+    COARSE_SEARCH_TYPE,
+    COARSE_TOP_K,
+    DOWNLOAD_PATH,
+    FILE_KEY,
+    MAX_DOC_COUNT,
+    QDRANT_COLLECTION_NAME,
+    QDRANT_HOST_URL,
+    QDRANT_SNAPSHOT_URL,
+)
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import Qdrant
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 
 logger = logging.getLogger(__name__)
 store = None
 retriever = None
 
 
-def init_data_utils():
-    # No init currently needed but we may need this setup hook in the future
-    pass
-
-
-# Load data from s3
 def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):
-    # Ensure the directory exists
     if not os.path.exists(download_path):
         os.makedirs(download_path)
 
     file_path = os.path.join(download_path, file_key)
 
-    # Check if the file already exists, download it if needed
     if not os.path.exists(file_path):
         s3 = boto3.client("s3")
         s3.download_file(bucket_name, file_key, file_path)
@@ -49,28 +50,22 @@ def download_s3_folder(bucket_name, s3_folder, local_dir):
     )
     s3 = boto3.client("s3")
 
-    # Ensure the local directory exists
     if not os.path.exists(local_dir):
         os.makedirs(local_dir)
         logger.info(f"Created local directory: {local_dir}")
 
-    # List objects within the specified S3 folder
     paginator = s3.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_folder):
         if "Contents" in page:
             for obj in page["Contents"]:
-                # Extract the key name
                 key = obj["Key"]
-                # Remove the prefix and ensure no leading slash
                 relative_path = key[len(s3_folder) :].lstrip("/")
-                # Create the full local path
                 local_path = os.path.join(local_dir, relative_path)
                 local_subdir = os.path.dirname(local_path)
                 if not os.path.exists(local_subdir):
                     os.makedirs(local_subdir)
                     logger.info(f"Created subdirectory: {local_subdir}")
                 try:
-                    # Download the file
                     s3.download_file(bucket_name, key, local_path)
                     logger.info(f"Downloaded {key} to {local_path}")
                 except PermissionError as e:
@@ -79,12 +74,9 @@ def download_s3_folder(bucket_name, s3_folder, local_dir):
 
 def create_documents(df):
     df_copy = df.copy(deep=True)
-    # df_copy = df_copy.dropna(subset=["AggregatedRating"])
-    # df_copy = df_copy.dropna(subset=["ReviewCount"])
     df_copy = df_copy.astype({"AggregatedRating": float, "ReviewCount": int})
-
-    df_copy = df_copy.fillna("")  # Convert NA values to empty strings
-    df_copy = df_copy.astype(str)  # Cast all columns to string
+    df_copy = df_copy.fillna("")
+    df_copy = df_copy.astype(str)
 
     documents = []
     for _index, row in df_copy.iterrows():
@@ -123,17 +115,13 @@ def create_documents(df):
             ),
         }
 
-        # List of fields to be included in the document content
         content_field = (
             row["Combined_Features"]
             if row["Combined_Features"]
             else "No Content Available"
         )
-
-        # Create the document content using the combined features field
         doc = Document(page_content=content_field, metadata=metadata)
 
-        # Skip documents without any content
         if len(doc.page_content) > 0:
             documents.append(doc)
 
@@ -143,10 +131,8 @@ def create_documents(df):
 def initialize_documents(max_document_count=None):
     logger.info("Initializing recipes data")
     df = download_and_load_data_if_not_exists(BUCKET_NAME, FILE_KEY, DOWNLOAD_PATH)
-    if max_document_count != None:
-        df = df.sample(
-            n=max_document_count
-        )  # Reduce the number of rows by randomly sampling
+    if max_document_count is not None:
+        df = df.sample(n=max_document_count)
 
     documents = create_documents(df)
     logger.info(f"Successfully created {len(documents)} documents")
@@ -154,73 +140,61 @@ def initialize_documents(max_document_count=None):
     return documents
 
 
-def initialize_vector_db(snapshot_path=QDRANT_SNAPSHOT_PATH):
-    if not os.path.exists(snapshot_path):
-        # Did not find the snapshot locally, try downloading it from S3
-        try:
-            snapshot_local_abs_path = os.path.abspath(snapshot_path)
-            download_s3_folder(BUCKET_NAME, QDRANT_S3_PATH, snapshot_local_abs_path)
-        except Exception as e:
-            logger.error(f"Failed to download remote snapshot: {e}")
-            logger.info(
-                "Could not restore from snapshot, recreating reating document database"
-            )
-            return create_db_instance(snapshot_path)
-
-        # Download didn't throw an error but we still can't find the snapshot locally
-        if not os.path.exists(snapshot_path):
-            logger.info(
-                "Could not restore from snapshot, recreating reating document database"
-            )
-            return create_db_instance(snapshot_path)
-
-    # The snapshot was found, restore it
-    logger.info(f"Found existing db snapshot at {snapshot_path}, restoring instance")
-    return restore_db_instance(snapshot_path)
+def initialize_vector_db(snapshot_url=QDRANT_SNAPSHOT_URL, recreate_db=False):
+    if recreate_db:
+        logger.info("Recreating vector DB instance from scratch")
+        return create_db_instance()
+    else:
+        logger.info(f"Restoring vector DB from snapshot at: {snapshot_url}")
+        return restore_db_instance_from_url(snapshot_url)
 
 
-# Create a db instance, computes embeddings and persists to disk
-def create_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
-    # Use this when developing to more quickly load
-    # to avoid waiting for all 500,000+ documents
-    # documents = initialize_documents(max_document_count=MAX_DOC_COUNT)
+def create_db_instance(qdrant_url=QDRANT_HOST_URL):
     documents = initialize_documents()
 
     logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
 
-    # Update references
     global store
     global retriever
 
-    logger.info("Initializing document db, this will take a while ...")
-    store = Qdrant.from_documents(
-        documents,
-        embedding_model,
-        path=QDRANT_SNAPSHOT_PATH,
+    # Generate an embedding to determine the vector size
+    sample_vector = embedding_model.embed_query(documents[0].page_content)
+    vector_size = len(sample_vector)
+
+    qdrant_client = QdrantClient(url=qdrant_url, timeout=300) # Allow up to 5 minutes before failing slow requests
+
+    # Create a collection with dynamically determined vector size
+    qdrant_client.create_collection(
         collection_name=QDRANT_COLLECTION_NAME,
+        vectors_config=models.VectorParams(
+            size=vector_size, distance=models.Distance.COSINE
+        ),
     )
-    retriever = store.as_retriever(
-        search_type=COARSE_SEARCH_TYPE,
-        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
-    )
-    logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
-    return retriever
+    # Prepare data for batch upload
+    batch_size = 1000
+    for i in range(0, len(documents), batch_size):
+        batch_docs = documents[i : i + batch_size]
+        ids, vectors, payloads = [], [], []
+        for j, doc in enumerate(batch_docs):
+            ids.append(str(uuid.uuid4()))  # Use UUIDs to ensure valid point IDs
+            vectors.append(embedding_model.embed_query(doc.page_content))
+            payloads.append(doc.metadata)
 
+        # Batch upload documents
+        qdrant_client.upsert(
+            collection_name=QDRANT_COLLECTION_NAME,
+            points=models.Batch(ids=ids, vectors=vectors, payloads=payloads),
+        )
+        logger.info(
+            f"Uploaded batch {i // batch_size + 1} of {len(documents) // batch_size + 1}"
+        )
 
-# Reloads a vector db snapshot from disk to avoid
-# recomputing document embeddings
-def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
-    logger.info("Loading embedding model")
-    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
-
-    # Update references
-    global store
-    global retriever
-
-    # Restore snapshot
-    qdrant_client = QdrantClient(path=snapshot_path)
+    # NOTE TO SELF:
+    # If Snapshot times out, try upping timeout, if all fails, check docker logs, to see if creation succeeded still
+    # if so, manually copy it out and upload to S3, then restart server without recreate_db flag set to restore it
+    qdrant_client.create_snapshot(collection_name=QDRANT_COLLECTION_NAME)
 
     store = Qdrant(
         client=qdrant_client,
@@ -231,17 +205,69 @@ def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_PATH):
         search_type=COARSE_SEARCH_TYPE,
         search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
-    num_docs = qdrant_client.count(
-        collection_name=QDRANT_COLLECTION_NAME, exact=True
-    ).count
+    logger.info(f"Successfully initialized document db with {len(documents)} documents")
+
+
+# def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_URL):
+#     logger.info("Loading embedding model")
+#     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
+
+#     global store
+#     global retriever
+
+#     # Restore snapshot
+#     qdrant_client = QdrantClient(path=snapshot_path)
+
+#     store = Qdrant(
+#         client=qdrant_client,
+#         collection_name=QDRANT_COLLECTION_NAME,
+#         embeddings=embedding_model,
+#     )
+#     retriever = store.as_retriever(
+#         search_type=COARSE_SEARCH_TYPE,
+#         search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+#     )
+#     num_docs = qdrant_client.count(
+#         collection_name=QDRANT_COLLECTION_NAME, exact=True
+#     ).count
+#     logger.info(
+#         f"Successfully restored document db snapshot from {snapshot_path} with {num_docs} documents"
+#     )
+
+#     return retriever
+
+
+def restore_db_instance_from_url(snapshot_url, collection_name=QDRANT_COLLECTION_NAME, qdrant_url=QDRANT_HOST_URL):
+    logger.info("Loading embedding model")
+    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
+
+    global store
+    global retriever
+
+    qdrant_client = QdrantClient(url=qdrant_url, timeout=300) # Allow up to 5 minutes before failing slow requests
+
+    # Restore the snapshot from the URL
+    qdrant_client.recover_snapshot(
+        collection_name=collection_name, location=snapshot_url
+    )
+
+    store = Qdrant(
+        client=qdrant_client,
+        collection_name=collection_name,
+        embeddings=embedding_model,
+    )
+    retriever = store.as_retriever(
+        search_type=COARSE_SEARCH_TYPE,
+        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+    )
+    num_docs = qdrant_client.count(collection_name=collection_name, exact=True).count
     logger.info(
-        f"Successfully restored document db snapshot from {snapshot_path} with {num_docs} documents"
+        f"Successfully restored document db snapshot from {snapshot_url} with {num_docs} documents"
     )
 
     return retriever
 
 
-# Executes a list of queries and returns a list of document results
 def handle_vector_db_queries(queries, retriever):
     context_docs = []
     if isinstance(queries, str):
@@ -253,7 +279,6 @@ def handle_vector_db_queries(queries, retriever):
     return context_docs
 
 
-# Converts a list of document objects into a string with its metadata
 def format_docs(docs):
     formatted_docs = []
     excluded_columns = ["name", "recipe_category", "description"]
