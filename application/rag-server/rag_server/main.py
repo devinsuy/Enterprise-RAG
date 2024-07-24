@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 import boto3
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
@@ -16,7 +17,6 @@ from constants import BUCKET_NAME_TESTING, config_test_dict
 from data_utils import handle_vector_db_queries, initialize_vector_db
 from llm.llm_handler import run_chat_loop
 from retrieval_utils import initialize_retrieval_chain, intialize_reranker
-from dotenv import load_dotenv
 
 # Load env vars
 load_dotenv()

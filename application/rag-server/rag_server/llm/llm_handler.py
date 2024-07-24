@@ -2,6 +2,7 @@ import json
 import logging
 
 import boto3
+from dotenv import load_dotenv
 
 from constants import MODEL_ID, RETRIEVER
 from data_utils import format_docs, handle_vector_db_queries
@@ -9,6 +10,9 @@ from data_utils import format_docs, handle_vector_db_queries
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
 from .tools import recipe_db_query_tool
+
+# Ensure AWS creds always load before bedrock client is instantiated
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 

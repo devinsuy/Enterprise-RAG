@@ -11,12 +11,10 @@ from qdrant_client import QdrantClient, models
 
 from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
                        COARSE_TOP_K, DOWNLOAD_PATH, EMBEDDING_MODEL_ID,
-                       FILE_KEY, QDRANT_COLLECTION_NAME,
-                       QDRANT_HOST_URL, QDRANT_SNAPSHOT_URL)
+                       FILE_KEY, QDRANT_COLLECTION_NAME, QDRANT_HOST_URL,
+                       QDRANT_SNAPSHOT_URL)
 
 logger = logging.getLogger(__name__)
-store = None
-retriever = None
 
 
 def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):
