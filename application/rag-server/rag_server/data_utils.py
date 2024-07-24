@@ -1,27 +1,18 @@
-import json
 import logging
 import os
 import uuid
 
 import boto3
 import pandas as pd
-from constants import (
-    BUCKET_NAME,
-    COARSE_LAMBDA,
-    COARSE_SEARCH_TYPE,
-    COARSE_TOP_K,
-    DOWNLOAD_PATH,
-    FILE_KEY,
-    MAX_DOC_COUNT,
-    QDRANT_COLLECTION_NAME,
-    QDRANT_HOST_URL,
-    QDRANT_SNAPSHOT_URL,
-)
-from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import Qdrant
 from qdrant_client import QdrantClient, models
+
+from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
+                       COARSE_TOP_K, DOWNLOAD_PATH, EMBEDDING_MODEL_ID,
+                       FILE_KEY, QDRANT_COLLECTION_NAME,
+                       QDRANT_HOST_URL, QDRANT_SNAPSHOT_URL)
 
 logger = logging.getLogger(__name__)
 store = None
@@ -140,7 +131,32 @@ def initialize_documents(max_document_count=None):
     return documents
 
 
-def initialize_vector_db(snapshot_url=QDRANT_SNAPSHOT_URL, recreate_db=False):
+def initialize_vector_db(
+    snapshot_url=QDRANT_SNAPSHOT_URL,
+    qdrant_url=QDRANT_HOST_URL,
+    recreate_db=False,
+    needs_init=False,
+):
+    # No creation or reloading necessary, just return a reference
+    if needs_init == False:
+        logger.info("Loading embedding model")
+        embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
+        logger.info("DB is already running, restoring client and retriever")
+        qdrant_client = QdrantClient(
+            url=qdrant_url, timeout=300
+        )  # Allow up to 5 minutes before failing slow requests
+        store = Qdrant(
+            client=qdrant_client,
+            collection_name=QDRANT_COLLECTION_NAME,
+            embeddings=embedding_model,
+        )
+        retriever = store.as_retriever(
+            search_type=COARSE_SEARCH_TYPE,
+            search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+        )
+        return [store, retriever]
+
+    # Recreate or restore from snapshot
     if recreate_db:
         logger.info("Recreating vector DB instance from scratch")
         return create_db_instance()
@@ -153,16 +169,15 @@ def create_db_instance(qdrant_url=QDRANT_HOST_URL):
     documents = initialize_documents()
 
     logger.info("Loading embedding model")
-    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
-
-    global store
-    global retriever
+    embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
 
     # Generate an embedding to determine the vector size
     sample_vector = embedding_model.embed_query(documents[0].page_content)
     vector_size = len(sample_vector)
 
-    qdrant_client = QdrantClient(url=qdrant_url, timeout=300) # Allow up to 5 minutes before failing slow requests
+    qdrant_client = QdrantClient(
+        url=qdrant_url, timeout=300
+    )  # Allow up to 5 minutes before failing slow requests
 
     # Create a collection with dynamically determined vector size
     qdrant_client.create_collection(
@@ -207,10 +222,12 @@ def create_db_instance(qdrant_url=QDRANT_HOST_URL):
     )
     logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
+    return [store, retriever]
+
 
 # def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_URL):
 #     logger.info("Loading embedding model")
-#     embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
+#     embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
 
 #     global store
 #     global retriever
@@ -237,14 +254,14 @@ def create_db_instance(qdrant_url=QDRANT_HOST_URL):
 #     return retriever
 
 
-def restore_db_instance_from_url(snapshot_url, collection_name=QDRANT_COLLECTION_NAME, qdrant_url=QDRANT_HOST_URL):
+def restore_db_instance_from_url(
+    snapshot_url, collection_name=QDRANT_COLLECTION_NAME, qdrant_url=QDRANT_HOST_URL
+):
     logger.info("Loading embedding model")
-    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
-
-    global store
-    global retriever
-
-    qdrant_client = QdrantClient(url=qdrant_url, timeout=300) # Allow up to 5 minutes before failing slow requests
+    embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
+    qdrant_client = QdrantClient(
+        url=qdrant_url, timeout=300
+    )  # Allow up to 5 minutes before failing slow requests
 
     # Restore the snapshot from the URL
     qdrant_client.recover_snapshot(
@@ -265,7 +282,7 @@ def restore_db_instance_from_url(snapshot_url, collection_name=QDRANT_COLLECTION
         f"Successfully restored document db snapshot from {snapshot_url} with {num_docs} documents"
     )
 
-    return retriever
+    return [store, retriever]
 
 
 def handle_vector_db_queries(queries, retriever):

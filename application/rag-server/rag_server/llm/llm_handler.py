@@ -2,10 +2,9 @@ import json
 import logging
 
 import boto3
+
 from constants import MODEL_ID, RETRIEVER
-from data_utils import (format_docs, handle_vector_db_queries,
-                        initialize_vector_db)
-from retrieval_utils import initialize_retrieval_chain, intialize_reranker
+from data_utils import format_docs, handle_vector_db_queries
 
 from .message_utils import generate_message, generate_tool_message
 from .prompts import baseline_sys_prompt
@@ -13,39 +12,10 @@ from .tools import recipe_db_query_tool
 
 logger = logging.getLogger(__name__)
 
-# Avoid implicit initialization, leads to race conditions with main.py importing this
-document_retriever = None
-bedrock_client = None
+bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 
-def init_llm_handler():
-    global document_retriever
-    global bedrock_client
-    if RETRIEVER == "self_query_chain":
-        logger.info("Retriever selected: retrieval_chain")
-        coarse_retriever = initialize_vector_db()
-        document_retriever = initialize_retrieval_chain(coarse_retriever)
-
-    elif RETRIEVER == "reranker":
-        logger.info("Retriever in use: reranker")
-        coarse_retriever = initialize_vector_db()
-        document_retriever = intialize_reranker(coarse_retriever)
-
-    elif RETRIEVER == "coarse":
-        logger.info("Retriever in use: coarse")
-        document_retriever = initialize_vector_db()
-
-    else:
-        raise ValueError(
-            "Invalid retriever selected - In constants.py set RETRIEVER"
-            "to one of the following:\n"
-            "\t'coarse', 'reranker', or 'self_query_chain'"
-        )
-
-    bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
-
-
-def query_bedrock_llm(messages):
+def query_bedrock_llm(messages, temperature=0.1, top_p=0.9):
     response = bedrock_client.invoke_model(
         modelId=MODEL_ID,
         body=json.dumps(
@@ -62,13 +32,12 @@ def query_bedrock_llm(messages):
                 #     "name": recipe_db_query_tool['name']
                 # },
                 # TODO: TUNE THESE VALUES
-                "temperature": 0.1,
-                "top_p": 0.9,
+                "temperature": temperature,
+                "top_p": top_p,
             }
         ),
     )
     response_body = json.loads(response.get("body").read())
-
     return response_body
 
 
@@ -122,7 +91,7 @@ def message_handler(existing_chat_history, prompt, is_tool_message=False):
 
 
 # Takes as an argument to LLM message content, returns a list of the fn result objects
-def handle_function_calls(tool_call_message_content):
+def handle_function_calls(tool_call_message_content, document_retriever):
     tool_results = []
 
     for tool_call in tool_call_message_content:
@@ -200,7 +169,7 @@ Example payload structure of llm_message['content']:
 
 # This function is the entry point to invoke the LLM with support for function calling
 # parsing output, calling requested functions, sending output is handled here
-def run_chat_loop(existing_chat_history, prompt):
+def run_chat_loop(existing_chat_history, prompt, document_retriever):
     logger.info(f"[User]: {prompt}")
 
     response_body, llm_message, chat_history = message_handler(
@@ -212,7 +181,8 @@ def run_chat_loop(existing_chat_history, prompt):
     while response_body["stop_reason"] == "tool_use":
         fn_calls.extend(response_body["content"])
         fn_results = handle_function_calls(
-            tool_call_message_content=llm_message["content"]
+            tool_call_message_content=llm_message["content"],
+            document_retriever=document_retriever,
         )
 
         # Send function results back to LLM as a new message with the existing chat history

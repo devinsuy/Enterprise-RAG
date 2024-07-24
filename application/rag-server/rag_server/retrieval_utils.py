@@ -1,8 +1,6 @@
 import logging
 import os
 
-from constants import (COARSE_TOP_K, RERANKER_TOP_N, SELF_QUERY_API,
-                       SELF_QUERY_MODEL)
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain.retrievers.self_query.base import SelfQueryRetriever
@@ -11,6 +9,9 @@ from langchain_community.vectorstores import Qdrant
 from langchain_core.runnables import RunnableMap, RunnablePassthrough
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
+
+from constants import (COARSE_TOP_K, EMBEDDING_MODEL_ID, RERANKER_MODEL_ID,
+                       RERANKER_TOP_N, SELF_QUERY_API, SELF_QUERY_MODEL)
 from llm.prompts import (DOCUMENT_CONTENT_DESCRIPTION, METADATA_FIELD_INFO,
                          self_query_sys_prompt)
 
@@ -21,7 +22,7 @@ embedding_model = None
 
 
 def intialize_reranker(base_retriever):
-    reranker_model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
+    reranker_model = HuggingFaceCrossEncoder(model_name=RERANKER_MODEL_ID)
     compressor = CrossEncoderReranker(model=reranker_model, top_n=RERANKER_TOP_N)
     reranker_retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=base_retriever
@@ -33,7 +34,7 @@ def initialize_chain_models():
     global embedding_model
 
     logger.info("Initializing retrieval models")
-    embedding_model = HuggingFaceEmbeddings(model_name="multi-qa-mpnet-base-dot-v1")
+    embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
 
     if SELF_QUERY_API == "OpenAI":
         self_query_llm = ChatOpenAI(

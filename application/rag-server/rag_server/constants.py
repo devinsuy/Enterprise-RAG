@@ -1,4 +1,6 @@
 MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+EMBEDDING_MODEL_ID = "multi-qa-mpnet-base-dot-v1"
+RERANKER_MODEL_ID = "BAAI/bge-reranker-base"
 
 BUCKET_NAME = "recipes-rag"
 FILE_KEY = "recipes_w_cleaning_time_combined_features.parquet"
@@ -6,7 +8,10 @@ DOWNLOAD_PATH = "data"
 
 # Qdrant Store
 MAX_DOC_COUNT = 150
-QDRANT_SNAPSHOT_PATH = "./qdrant/recipe_db_snapshot"
+QDRANT_HOST_URL = "http://localhost:6333"
+QDRANT_SNAPSHOT_URL = (
+    "https://public-recipe-db-snapshot.s3.amazonaws.com/recipe_document.snapshot"
+)
 QDRANT_COLLECTION_NAME = "recipe_documents"
 QDRANT_S3_PATH = "qdrant/recipe_db_snapshot"
 
