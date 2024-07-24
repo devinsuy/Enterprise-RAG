@@ -81,14 +81,14 @@ async def get_api_key(request: Request, api_key_header: str = Depends(api_key_he
         )
 
 
-@app.get("/api/v1/health")
+@app.get("/v1/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 
 # CURRENTLY USING COARSE RETREIVER FOR ALL REQUESTS
 # TODO: UPDATE THIS AFTER TEST EVALUATION
-@app.post("/api/v1/chat")
+@app.post("/v1/chat")
 async def generate_message(request: ChatRequest, api_key: str = Depends(get_api_key)):
     try:
         chat_history_as_dicts = [
@@ -116,7 +116,7 @@ async def generate_message(request: ChatRequest, api_key: str = Depends(get_api_
 
 # CURRENTLY USING COARSE RETREIVER FOR ALL REQUESTS
 # TODO: UPDATE THIS AFTER TEST EVALUATION
-@app.post("/api/v1/recipes/query", response_model=DocsQueryResponse)
+@app.post("/v1/recipes/query", response_model=DocsQueryResponse)
 async def query_documents(
     request: DocsQueryRequest, api_key: str = Depends(get_api_key)
 ):
@@ -131,7 +131,7 @@ async def query_documents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/recipes/test_queries")
+@app.post("/v1/recipes/test_queries")
 async def run_test_prompts(
     request: TestQueriesRequest, file_name: str, api_key: str = Depends(get_api_key)
 ):
