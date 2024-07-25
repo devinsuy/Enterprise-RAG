@@ -19,7 +19,7 @@ QDRANT_S3_PATH = "qdrant/recipe_db_snapshot"
 RETRIEVER = "self_query_chain"  # options: coarse, reranker, self_query_chain
 
 # Coarse Retriever Config
-COARSE_SEARCH_TYPE = "mmr"
+COARSE_SEARCH_TYPE = "similarity"
 COARSE_TOP_K = 5
 COARSE_LAMBDA = 0.5
 
