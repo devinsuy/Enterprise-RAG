@@ -9,7 +9,7 @@ export const AppBar: React.FC = () => {
     <MuiAppBar position="sticky">
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Scrumptious
+            Scraps To Scrumptious
         </Typography>
         <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
           {tabs.map((tab) => (
