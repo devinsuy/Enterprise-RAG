@@ -150,7 +150,7 @@ def initialize_vector_db(
         )
         retriever = store.as_retriever(
             search_type=COARSE_SEARCH_TYPE,
-            search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+            # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
         )
         return [store, retriever]
 
@@ -216,7 +216,7 @@ def create_db_instance(qdrant_url=QDRANT_HOST_URL):
     )
     retriever = store.as_retriever(
         search_type=COARSE_SEARCH_TYPE,
-        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+        # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
     logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
@@ -273,7 +273,7 @@ def restore_db_instance_from_url(
     )
     retriever = store.as_retriever(
         search_type=COARSE_SEARCH_TYPE,
-        search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
+        # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
     num_docs = qdrant_client.count(collection_name=collection_name, exact=True).count
     logger.info(
