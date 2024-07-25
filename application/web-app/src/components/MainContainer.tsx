@@ -3,6 +3,7 @@ import { Box, Button, Link, Typography } from '@mui/material'
 import { AppBar } from './AppBar'
 import { ChatContainer } from './ChatContainer'
 import { DebugPanel } from './DebugPanel'
+import { InfoPanel } from './InfoPanel'
 import logo from '../assets/logo.jpg'
 
 const introHeading = 'Scraps to Scrumptious'
@@ -14,6 +15,7 @@ const closingText = '. Enjoy your culinary journey with us.'
 
 export const MainContainer: React.FC = () => {
   const [isDebugOpen, setDebugOpen] = useState(false)
+  const [isInfoOpen, setInfoOpen] = useState(false)
 
   const handleDebugOpen = () => {
     setDebugOpen(true)
@@ -23,52 +25,67 @@ export const MainContainer: React.FC = () => {
     setDebugOpen(false)
   }
 
+  const handleInfoOpen = () => {
+    setInfoOpen(true)
+  }
+
+  const handleInfoClose = () => {
+    setInfoOpen(false)
+  }
+
   const handleClickAway = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (isDebugOpen && !(event.target as HTMLElement).closest('.MuiDrawer-paper')) {
       setDebugOpen(false)
+    }
+    if (isInfoOpen && !(event.target as HTMLElement).closest('.MuiDrawer-paper')) {
+      setInfoOpen(false)
     }
   }
 
   return (
     <Box
-    sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0' }}
-    onClick={handleClickAway}
-  >
-    <Box
-      sx={{
-        textAlign: 'center',
-        paddingTop: '30px',
-        maxWidth: '45%',
-        mx: 'auto', // This centers the box horizontally within its container
-      }}
+      sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0' }}
+      onClick={handleClickAway}
     >
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingBottom: '3%'
+          textAlign: 'center',
+          paddingTop: '30px',
+          maxWidth: '45%',
+          mx: 'auto', // This centers the box horizontally within its container
         }}
       >
-        <Typography variant="h5" component="h2" style={{ paddingBottom: '1%' }}>
-          {introHeading}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingBottom: '3%'
+          }}
+        >
+          <Typography variant="h5" component="h2" style={{ paddingBottom: '1%' }}>
+            {introHeading}
+          </Typography>
+          <Box component="img" src={logo} alt="Logo" sx={{ height: '146px', width: '239px' }} />
+        </Box>
+        <Typography variant="body1" component="p">
+          {introText}
+          <Link href={surveyLinkUrl} target="_blank" rel="noopener" sx={{ color: '#0000EE' }}>
+            {surveyLinkText}
+          </Link>
+          {closingText}
         </Typography>
-        <Box component="img" src={logo} alt="Logo" sx={{ height: '146px', width: '239px' }} />
+        <Button variant="contained" color="primary" onClick={handleInfoOpen} sx={{ marginTop: '20px', cursor: 'pointer' }}>
+          Learn How To Use
+        </Button>
       </Box>
-      <Typography variant="body1" component="p">
-        {introText}
-        <Link href={surveyLinkUrl} target="_blank" rel="noopener" sx={{ color: '#0000EE' }}>
-          {surveyLinkText}
-        </Link>
-        {closingText}
-      </Typography>
+      <ChatContainer />
+      <Button variant="contained" color="primary" onClick={handleDebugOpen} sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+        Open Debug Panel
+      </Button>
+      <DebugPanel open={isDebugOpen} onClose={handleDebugClose} />
+      <InfoPanel open={isInfoOpen} onClose={handleInfoClose} />
     </Box>
-    <ChatContainer />
-    <Button variant="contained" color="primary" onClick={handleDebugOpen} sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-      Open Debug Panel
-    </Button>
-    <DebugPanel open={isDebugOpen} onClose={handleDebugClose} />
-  </Box>
   )
 }
