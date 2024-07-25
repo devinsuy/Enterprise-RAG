@@ -27,6 +27,22 @@ interface ChatProviderProps {
 
 const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
+const parseText = (text: string): string => {
+  // Create a DOM parser
+  const parser = new DOMParser()
+  // Wrap the input text with a root element to ensure it's well-formed XML
+  const doc = parser.parseFromString(`<root>${text}</root>`, 'text/xml')
+
+  // Extract the content from the <result> tag, if it exists
+  const resultElement = doc.querySelector('result')
+  if (resultElement) {
+    return resultElement.textContent ?? ''
+  }
+
+  // If no <result> tag, remove all other tags and return the main content
+  return text.replace(/<[^>]*>[^<]*<\/[^>]*>/g, '').replace(/<[^>]*\/>/g, '')
+}
+
 export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [], fnCalls: [] }])
   const [activeTab, setActiveTab] = useState(0)
@@ -66,7 +82,8 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
 
       console.log(JSON.stringify(response))
       const { new_chat_history: newChatHistory, llm_response_text: llmResponseText, fn_calls: fnCalls } = response.data
-      const llmMsg = { user: 'LLM', text: llmResponseText, timestamp: getTimeStr() }
+      const parsedResponseText = parseText(llmResponseText)
+      const llmMsg = { user: 'LLM', text: parsedResponseText, timestamp: getTimeStr() }
 
       // Update the current tab with the new messages and chat history
       setTabs(prevTabs =>
