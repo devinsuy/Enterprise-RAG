@@ -44,7 +44,7 @@ export const MainContainer: React.FC = () => {
 
   return (
     <Box
-      sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0' }}
+      sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0', paddingBottom: '10%' }}
       onClick={handleClickAway}
     >
       <Box
