@@ -14,7 +14,7 @@ export const AppBar: React.FC = () => {
           <Typography variant="h6" sx={{ cursor: 'pointer', paddingRight: '20px' }} onClick={() => { navigate('/') }}>
             Scraps To Scrumptious
           </Typography>
-          <Tab label="About" component={Link} to="/about" />
+          <Tab label="About Us" component={Link} to="/about" />
           <Tab label="Team" component={Link} to="/team" />
         </Box>
         <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
