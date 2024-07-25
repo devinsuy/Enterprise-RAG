@@ -1,10 +1,19 @@
-// src/App.tsx
-import { MainContainer } from 'components'
+import { About } from 'About'
+import { AppBar, MainContainer } from 'components'
 import React from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Team } from 'Team'
 
 const App: React.FC = () => {
   return (
-    <MainContainer />
+    <BrowserRouter>
+      <AppBar />
+      <Routes>
+        <Route path="/" element={<MainContainer />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/team" element={<Team />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

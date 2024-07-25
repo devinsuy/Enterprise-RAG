@@ -34,7 +34,6 @@ export const MainContainer: React.FC = () => {
     sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0' }}
     onClick={handleClickAway}
   >
-    <AppBar />
     <Box
       sx={{
         textAlign: 'center',
