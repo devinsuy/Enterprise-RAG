@@ -42,15 +42,13 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
 
     setLoading(true)
 
-    // TODO: Temporarily add a loading message
-    setTimeout(() => {
-      const responseMessage: ChatMessage = { user: 'LLM', text: 'Loading...', timestamp: '' }
-      setTabs(prevTabs =>
-        prevTabs.map(tab =>
-          tab.id === activeTab ? { ...tab, messages: [...tab.messages, responseMessage] } : tab
-        )
+    // Temporarily add a loading message
+    const loadingMessage: ChatMessage = { user: 'LLM', text: 'Loading...', timestamp: '' }
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === activeTab ? { ...tab, messages: [...tab.messages, loadingMessage] } : tab
       )
-    }, 750)
+    )
 
     try {
       const response: ChatHistoryResponse = await axios.post(
@@ -74,7 +72,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       setTabs(prevTabs =>
         prevTabs.map(tab => {
           if (tab.id !== activeTab) return tab
-          const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.text !== 'Loading...') // TODO: ADD LOADING PROPERLY
+          const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.text !== 'Loading...')
           return {
             ...tab,
             messages: [...messagesWithoutLoadingMsg, llmMsg],
@@ -85,6 +83,12 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       )
     } catch (error) {
       console.error('Error sending message:', error)
+      const errorMessage: ChatMessage = { user: 'System', text: 'Error sending message. Please try again.', timestamp: getTimeStr() }
+      setTabs(prevTabs =>
+        prevTabs.map(tab =>
+          tab.id === activeTab ? { ...tab, messages: [...tab.messages.filter((msg) => msg.text !== 'Loading...'), errorMessage] } : tab
+        )
+      )
     } finally {
       setLoading(false)
     }
