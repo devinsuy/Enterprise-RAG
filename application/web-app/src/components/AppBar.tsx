@@ -14,17 +14,18 @@ export const AppBar: React.FC = () => {
           <Typography variant="h6" sx={{ cursor: 'pointer', paddingRight: '20px' }} onClick={() => { navigate('/') }}>
             Scraps To Scrumptious
           </Typography>
+          <Tab label="Chat" component={Link} to="/" />
           <Tab label="About Us" component={Link} to="/about" />
           <Tab label="Team" component={Link} to="/team" />
         </Box>
-        <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
+        {window.location.pathname === '/' && <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
           {tabs.map((tab) => (
             <Tab key={tab.id} label={`Thread ${tab.id + 1}`} />
           ))}
           <Button color="inherit" onClick={addTab}>
             + New Thread
           </Button>
-        </Tabs>
+        </Tabs>}
       </Toolbar>
     </MuiAppBar>
   )
