@@ -9,7 +9,7 @@ const introHeading = 'Scraps to Scrumptious'
 const introText = `Our innovative app is designed to turn your pantry items into tasty, diet-friendly meals while reducing food waste.
 We're excited for you to try it out and we'd greatly appreciate your feedback on your experience. After using the app, please take a moment to complete our survey by `
 const surveyLinkText = 'clicking here'
-const surveyLinkUrl = 'https://berkeley.yul1.qualtrics.com/jfe/preview/previewId/4817dcb7-d00c-4095-819c-2369cf8de90e/SV_8CzqCn6sJ8kCyPQ?Q_CHL=preview&Q_SurveyVersionID=current'
+const surveyLinkUrl = 'https://berkeley.qualtrics.com/jfe/form/SV_8CzqCn6sJ8kCyPQ'
 const closingText = '. Enjoy your culinary journey with us.'
 
 export const MainContainer: React.FC = () => {
