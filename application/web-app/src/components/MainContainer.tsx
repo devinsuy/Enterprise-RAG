@@ -6,7 +6,7 @@ import { DebugPanel } from './DebugPanel'
 import { InfoPanel } from './InfoPanel'
 import logo from '../assets/logo.jpg'
 
-const introHeading = 'Scraps to Scrumptious'
+const introHeading = 'Scraps To Scrumptious'
 const introText = `Our innovative app is designed to turn your pantry items into tasty, diet-friendly meals while reducing food waste.
 We're excited for you to try it out and we'd greatly appreciate your feedback on your experience. After using the app, please take a moment to complete our survey by `
 const surveyLinkText = 'clicking here'
