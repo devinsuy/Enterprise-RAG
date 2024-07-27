@@ -9,9 +9,7 @@ DOWNLOAD_PATH = "data"
 # Qdrant Store
 MAX_DOC_COUNT = 150
 QDRANT_HOST_URL = "http://localhost:6333"
-QDRANT_SNAPSHOT_URL = (
-    "https://public-recipe-db-snapshot.s3.amazonaws.com/recipe_document.snapshot"
-)
+QDRANT_SNAPSHOT_URL = "https://public-recipe-db-snapshot.s3.amazonaws.com/recipe_documents-5791562930133689-2024-07-26-08-07-46.snapshot"
 QDRANT_COLLECTION_NAME = "recipe_documents"
 QDRANT_S3_PATH = "qdrant/recipe_db_snapshot"
 

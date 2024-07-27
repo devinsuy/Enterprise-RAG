@@ -19,25 +19,19 @@ logger = logging.getLogger(__name__)
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 
-def query_bedrock_llm(messages, temperature=0.1, top_p=0.9):
+def query_bedrock_llm(messages, config):
     response = bedrock_client.invoke_model(
         modelId=MODEL_ID,
         body=json.dumps(
             {
                 "anthropic_version": "bedrock-2023-05-31",  # This is required to use chat style messages object
-                "system": baseline_sys_prompt,
                 "messages": messages,
-                "max_tokens": 3000,
                 "tools": [recipe_db_query_tool],
-                # This config forces the model to always call the recipe db query tool atleast once
-                # https://docs.anthropic.com/en/docs/build-with-claude/tool-use#controlling-claudes-output
-                # "tool_choice": {
-                #     "type": "tool",
-                #     "name": recipe_db_query_tool['name']
-                # },
-                # TODO: TUNE THESE VALUES
-                "temperature": temperature,
-                "top_p": top_p,
+                "system": config.system_prompt,
+                "max_tokens": config.max_tokens,
+                "temperature": config.temperature,
+                "top_p": config.top_p,
+                "top_k": config.top_k,
             }
         ),
     )
@@ -75,7 +69,7 @@ Example response body structure:
 """
 
 
-def message_handler(existing_chat_history, prompt, is_tool_message=False):
+def message_handler(existing_chat_history, prompt, config, is_tool_message=False):
     # Fn results is an array of tool response objects
     # message structure needs to reflect that
     if is_tool_message:
@@ -85,7 +79,7 @@ def message_handler(existing_chat_history, prompt, is_tool_message=False):
     existing_chat_history.append(user_message)
 
     # Parse the response content
-    response_body = query_bedrock_llm(existing_chat_history)
+    response_body = query_bedrock_llm(existing_chat_history, config)
     llm_message = {"role": response_body["role"], "content": response_body["content"]}
 
     # Add the response message to the chat history

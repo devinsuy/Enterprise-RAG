@@ -125,6 +125,8 @@ def initialize_documents(max_document_count=None):
 
     documents = create_documents(df)
     logger.info(f"Successfully created {len(documents)} documents")
+    logger.info(f"First doc: {documents[0]}")
+    logger.info(f"First doc: {documents[0].page_content}")
 
     return documents
 
@@ -135,6 +137,7 @@ def initialize_vector_db(
     recreate_db=False,
     needs_init=False,
 ):
+    # return create_db_instance()
     # No creation or reloading necessary, just return a reference
     if needs_init == False:
         logger.info("Loading embedding model")
@@ -148,11 +151,7 @@ def initialize_vector_db(
             collection_name=QDRANT_COLLECTION_NAME,
             embeddings=embedding_model,
         )
-        retriever = store.as_retriever(
-            search_type=COARSE_SEARCH_TYPE,
-            # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
-        )
-        return [store, retriever]
+        return store
 
     # Recreate or restore from snapshot
     if recreate_db:
@@ -165,91 +164,19 @@ def initialize_vector_db(
 
 def create_db_instance(qdrant_url=QDRANT_HOST_URL):
     documents = initialize_documents()
-
     logger.info("Loading embedding model")
     embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
 
-    # Generate an embedding to determine the vector size
-    sample_vector = embedding_model.embed_query(documents[0].page_content)
-    vector_size = len(sample_vector)
-
-    qdrant_client = QdrantClient(
-        url=qdrant_url, timeout=300
-    )  # Allow up to 5 minutes before failing slow requests
-
-    # Create a collection with dynamically determined vector size
-    qdrant_client.create_collection(
+    store = Qdrant.from_documents(
+        documents,
+        embedding_model,
+        url=qdrant_url,
+        prefer_grpc=False,
         collection_name=QDRANT_COLLECTION_NAME,
-        vectors_config=models.VectorParams(
-            size=vector_size, distance=models.Distance.COSINE
-        ),
-    )
-
-    # Prepare data for batch upload
-    batch_size = 1000
-    for i in range(0, len(documents), batch_size):
-        batch_docs = documents[i : i + batch_size]
-        ids, vectors, payloads = [], [], []
-        for j, doc in enumerate(batch_docs):
-            ids.append(str(uuid.uuid4()))  # Use UUIDs to ensure valid point IDs
-            vectors.append(embedding_model.embed_query(doc.page_content))
-            payloads.append(doc.metadata)
-
-        # Batch upload documents
-        qdrant_client.upsert(
-            collection_name=QDRANT_COLLECTION_NAME,
-            points=models.Batch(ids=ids, vectors=vectors, payloads=payloads),
-        )
-        logger.info(
-            f"Uploaded batch {i // batch_size + 1} of {len(documents) // batch_size + 1}"
-        )
-
-    # NOTE TO SELF:
-    # If Snapshot times out, try upping timeout, if all fails, check docker logs, to see if creation succeeded still
-    # if so, manually copy it out and upload to S3, then restart server without recreate_db flag set to restore it
-    qdrant_client.create_snapshot(collection_name=QDRANT_COLLECTION_NAME)
-
-    store = Qdrant(
-        client=qdrant_client,
-        collection_name=QDRANT_COLLECTION_NAME,
-        embeddings=embedding_model,
-    )
-    retriever = store.as_retriever(
-        search_type=COARSE_SEARCH_TYPE,
-        # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
     logger.info(f"Successfully initialized document db with {len(documents)} documents")
 
-    return [store, retriever]
-
-
-# def restore_db_instance(snapshot_path=QDRANT_SNAPSHOT_URL):
-#     logger.info("Loading embedding model")
-#     embedding_model = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_ID)
-
-#     global store
-#     global retriever
-
-#     # Restore snapshot
-#     qdrant_client = QdrantClient(path=snapshot_path)
-
-#     store = Qdrant(
-#         client=qdrant_client,
-#         collection_name=QDRANT_COLLECTION_NAME,
-#         embeddings=embedding_model,
-#     )
-#     retriever = store.as_retriever(
-#         search_type=COARSE_SEARCH_TYPE,
-#         search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
-#     )
-#     num_docs = qdrant_client.count(
-#         collection_name=QDRANT_COLLECTION_NAME, exact=True
-#     ).count
-#     logger.info(
-#         f"Successfully restored document db snapshot from {snapshot_path} with {num_docs} documents"
-#     )
-
-#     return retriever
+    return store
 
 
 def restore_db_instance_from_url(
@@ -265,22 +192,17 @@ def restore_db_instance_from_url(
     qdrant_client.recover_snapshot(
         collection_name=collection_name, location=snapshot_url
     )
-
     store = Qdrant(
         client=qdrant_client,
         collection_name=collection_name,
         embeddings=embedding_model,
-    )
-    retriever = store.as_retriever(
-        search_type=COARSE_SEARCH_TYPE,
-        # search_kwargs={"k": COARSE_TOP_K, "lambda_mult": COARSE_LAMBDA},
     )
     num_docs = qdrant_client.count(collection_name=collection_name, exact=True).count
     logger.info(
         f"Successfully restored document db snapshot from {snapshot_url} with {num_docs} documents"
     )
 
-    return [store, retriever]
+    return store
 
 
 def handle_vector_db_queries(queries, retriever):
