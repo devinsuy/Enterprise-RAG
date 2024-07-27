@@ -20,20 +20,19 @@ bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 
 def query_bedrock_llm(messages, config):
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": messages,
+        "tools": [recipe_db_query_tool],
+        "system": str(config.system_prompt),
+        "max_tokens": int(config.max_tokens),
+        "temperature": float(config.temperature),
+        "top_p": float(config.top_p),
+        "top_k": int(config.top_k),
+    }
     response = bedrock_client.invoke_model(
         modelId=MODEL_ID,
-        body=json.dumps(
-            {
-                "anthropic_version": "bedrock-2023-05-31",  # This is required to use chat style messages object
-                "messages": messages,
-                "tools": [recipe_db_query_tool],
-                "system": config.system_prompt,
-                "max_tokens": config.max_tokens,
-                "temperature": config.temperature,
-                "top_p": config.top_p,
-                "top_k": config.top_k,
-            }
-        ),
+        body=json.dumps(payload),
     )
     response_body = json.loads(response.get("body").read())
     return response_body
@@ -167,11 +166,11 @@ Example payload structure of llm_message['content']:
 
 # This function is the entry point to invoke the LLM with support for function calling
 # parsing output, calling requested functions, sending output is handled here
-def run_chat_loop(existing_chat_history, prompt, document_retriever):
+def run_chat_loop(existing_chat_history, prompt, document_retriever, config):
     logger.info(f"[User]: {prompt}")
 
     response_body, llm_message, chat_history = message_handler(
-        existing_chat_history=existing_chat_history, prompt=prompt
+        existing_chat_history=existing_chat_history, prompt=prompt, config=config
     )
 
     # The model wants to call tools, call them, provide response, repeat until content is generated
@@ -185,7 +184,10 @@ def run_chat_loop(existing_chat_history, prompt, document_retriever):
 
         # Send function results back to LLM as a new message with the existing chat history
         response_body, llm_message, chat_history = message_handler(
-            existing_chat_history=chat_history, prompt=fn_results, is_tool_message=True
+            existing_chat_history=chat_history,
+            prompt=fn_results,
+            is_tool_message=True,
+            config=config,
         )
 
     # The model is done calling tools, parse output and update chat
