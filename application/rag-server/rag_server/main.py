@@ -11,12 +11,12 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import ValidationError
-from tests.test_queries import gate_keeper_queries, test_queries
+from test_queries import gate_keeper_queries, test_queries
 
 from api_types import (ChatHistoryResponse, ChatRequest, CoarseSearchType,
                        DocRetreiver, DocsQueryRequest, DocsQueryResponse,
                        DocumentResponse, TestQueriesRequest)
-from constants import BUCKET_NAME_TESTING, config_test_dict
+from constants import BUCKET_NAME_TESTING
 from data_utils import handle_vector_db_queries, initialize_vector_db
 from llm.llm_handler import run_chat_loop
 from retrieval_utils import initialize_retrieval_chain, intialize_reranker
