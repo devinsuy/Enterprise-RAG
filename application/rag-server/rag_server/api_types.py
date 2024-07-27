@@ -2,12 +2,14 @@ from enum import Enum
 from typing import Any, List, Optional, Union
 
 from fastapi import FastAPI
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 from llm.prompts import baseline_sys_prompt
 
 app = FastAPI()
 
+def default_config_params():
+    return ConfigParams()
 
 class ToolUseInput(BaseModel):
     queries: List[str]
@@ -104,7 +106,7 @@ class ChatRequest(BaseModel):
     existing_chat_history: List[Message]
     # This is always a user prompt to start or continue existing dialogue
     prompt: str
-    config: Optional[ConfigParams] = None
+    config: ConfigParams = Field(default_factory=default_config_params)
 
     class Config:
         extra = "forbid"
@@ -160,7 +162,7 @@ class DocsQueryResponse(BaseModel):
 
 class TestQueriesRequest(BaseModel):
     test_queries: Optional[List[str]] = None
-    config: Optional[ConfigParams] = None
+    config: ConfigParams = Field(default_factory=default_config_params)
     file_name: Optional[str] = None
 
     class Config:
