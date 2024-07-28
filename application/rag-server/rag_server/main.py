@@ -11,15 +11,17 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import ValidationError
-from test_queries import gate_keeper_queries, test_queries
 
 from api_types import (ChatHistoryResponse, ChatRequest, CoarseSearchType,
                        DocRetreiver, DocsQueryRequest, DocsQueryResponse,
-                       DocumentResponse, TestQueriesRequest)
+                       DocumentResponse, DynamicTunersRequest,
+                       TestQueriesRequest)
 from constants import BUCKET_NAME_TESTING
 from data_utils import handle_vector_db_queries, initialize_vector_db
-from llm.llm_handler import run_chat_loop
+from llm.llm_handler import message_handler, run_chat_loop
+from llm.prompts import dynamic_prompt_tuners
 from retrieval_utils import initialize_retrieval_chain, intialize_reranker
+from test_queries import gate_keeper_queries, test_queries
 
 # Load env vars
 load_dotenv()
@@ -117,6 +119,42 @@ async def get_api_key(request: Request, api_key_header: str = Depends(api_key_he
 @app.get("/v1/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+    prompt = prompt.replace("{chat_history}", chat_history)
+
+
+@app.post("/v1/prompt/tuners")
+async def generate_prompt_tuners(
+    request: DynamicTunersRequest, api_key: str = Depends(get_api_key)
+):
+    print(f"Running /prompt/tuners request with config {request.config}")
+    try:
+        chat_history_as_dicts = [
+            message.model_dump() for message in request.existing_chat_history
+        ]
+        chat_history_str = json.dumps({"chat_history": chat_history_as_dicts})
+        prompt_with_history = dynamic_prompt_tuners.replace(
+            "{chat_history}", chat_history_str
+        )
+        # Prompt already has chat history injected, empty history used to not provide it twice
+        response_body, llm_message, updated_chat_history = message_handler(
+            [], prompt_with_history, request.config
+        )
+        model_text_output = llm_message["content"][0]["text"]
+        return ChatHistoryResponse(
+            llm_response_text=model_text_output,
+            new_chat_history=updated_chat_history,
+            fn_calls=None,
+        )
+    except ValidationError as e:
+        logger.error(f"Validation error: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
+    except ValueError as e:
+        logger.error(f"Value error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @app.post("/v1/chat")

@@ -13,7 +13,7 @@ test_queries = [
     "I am allergic to shellfish and soy. I need a vegetarian Japanese food recipe high in protein and fiber and can be prepared in less than 30 minutes.",
     "I am lactose intolerant and need a dessert recipe that is dairy-free, gluten-free, and low in sugar, but still tastes rich and creamy.",
     "Suggest a high-fiber, low-calorie lunch recipe that includes beans, is vegetarian, and can be prepared in less than 25 minutes.",
-    "Suggest a Middle Eastern vegan lunch recipe that is rich in protein, includes chickpeas, and can be prepared in less than 35 minutes."
+    "Suggest a Middle Eastern vegan lunch recipe that is rich in protein, includes chickpeas, and can be prepared in less than 35 minutes.",
 ]
 
 gate_keeper_queries = [
@@ -40,5 +40,5 @@ gate_keeper_queries = [
     "I am allergic to peanuts. Can you suggest a peanut butter cookie recipe?",
     "I follow a vegan diet but also want a recipe with chicken. Can you provide one?",
     "I need a gluten-free pasta recipe, but please include wheat flour.",
-    "I avoid sugar and dairy, but can you suggest a sweet and creamy dessert?"
+    "I avoid sugar and dairy, but can you suggest a sweet and creamy dessert?",
 ]

@@ -20,6 +20,24 @@ google_search_query_saved = """
 - If you encounter a query related to ingredient substitutions, preparation techniques, nutritional information, or other specific knowledge not contained within the recipe database, make a call to the google_web_search function to look up relevant information.
 """
 
+dynamic_prompt_tuners = """
+You are a system generating recipes based on user requests. 
+The user may have specific dietary requirements and preferences. 
+Analyze the entire chat history and suggest 5 refinements or "prompt tuners" for the next recipe generation. 
+These tuners should be contextually relevant, concise, and provide clear directions for improving or adjusting the recipe. 
+The tuners should reflect the user's preferences and dietary restrictions, and each tuner should be short, with a maximum of 4 to 5 words. 
+The output should only be a comma-separated list of tuners with no spaces after each comma. 
+It should never include any additional text or explanation.
+
+Chat History:
+{chat_history}
+
+
+Examples of Desired Output:
+- with vegan cheese,add mushrooms,gluten-free crust,more vegetables,low-carb sauce
+- add tofu,increase spice level,add more greens,use quinoa,low sodium
+"""
+
 self_query_sys_prompt = """"""
 # self_query_sys_prompt = """
 # system: You are a helpful assistant and expert in cooking recipes.

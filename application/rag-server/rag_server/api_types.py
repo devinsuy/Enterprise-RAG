@@ -2,14 +2,16 @@ from enum import Enum
 from typing import Any, List, Optional, Union
 
 from fastapi import FastAPI
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, Field, validator
 
 from llm.prompts import baseline_sys_prompt
 
 app = FastAPI()
 
+
 def default_config_params():
     return ConfigParams()
+
 
 class ToolUseInput(BaseModel):
     queries: List[str]
@@ -96,6 +98,17 @@ class ConfigParams(BaseModel):
 
     self_query_api: Optional[SelfQueryApi] = SelfQueryApi.OpenAI
     self_query_model: Optional[str] = "gpt-4o-mini"
+
+    class Config:
+        extra = "forbid"
+
+
+class DynamicTunersRequest(BaseModel):
+    # Any existing state from previous dialogue, or an empty list if this is the first prompt
+    existing_chat_history: List[Message]
+
+    # Config overrides, NOTE: only generation configs are used since retrival is not relevant
+    config: ConfigParams = Field(default_factory=default_config_params)
 
     class Config:
         extra = "forbid"
