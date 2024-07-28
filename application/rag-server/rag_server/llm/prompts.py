@@ -28,6 +28,7 @@ These tuners should be contextually relevant, concise, and provide clear directi
 The tuners should reflect the user's preferences and dietary restrictions, and each tuner should be short, with a maximum of 4 to 5 words. 
 The output should only be a comma-separated list of tuners with no spaces after each comma. 
 It should never include any additional text or explanation.
+No tuner should ever be the same as, or too similar to something the user already said previously.
 
 Chat History:
 {chat_history}
