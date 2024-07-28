@@ -1,5 +1,5 @@
-export const HOST = 'http://localhost:8000'
-// export const HOST = 'https://api.scraps2scrumptious.com'
+// export const HOST = 'http://localhost:8000'
+export const HOST = 'https://api.scraps2scrumptious.com'
 export const API_ENDPOINTS = {
   chat: `${HOST}/v1/chat`,
   tuners: `${HOST}/v1/prompt/tuners`
