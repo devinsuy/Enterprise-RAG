@@ -36,13 +36,13 @@ export const About: React.FC = () => {
         <strong>How to use Scraps2Scrumptious</strong>
       </Typography>
       <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        1. <strong>Input Your Query:</strong> Start by entering your preferences, ingredients, or any specific dish you have in mind.
+        1. <strong>Start Chatting:</strong> Enter your preferences, ingredients, or any specific dish you have in mind.
       </Typography>
       <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
         2. <strong>AI Generation:</strong> Our advanced RAG system goes to work, retrieving relevant information from a comprehensive recipe database and generating a customized recipe tailored to your input.
       </Typography>
       <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        3. <strong>Fine Tuning:</strong> Don&rsquo;t like tomatoes in your sandwich? Don&rsquo;t have cumin at home? Just enter that in the chat box or tell our algorithm what you&rsquo;re thinking! It will generate a new recipe that will remove that ingredient or even substitute it.
+        3. <strong>Make it Personal:</strong> Don&rsquo;t like tomatoes in your sandwich? Don&rsquo;t have cumin at home? Just enter that in the chat box or tell our algorithm what you&rsquo;re thinking! It will generate a new recipe that will remove that ingredient or even substitute it.
       </Typography>
       <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
         4. <strong>Enjoy Cooking:</strong> Follow the step-by-step instructions provided by Scraps2Scrumptious and enjoy a delightful meal designed to suit your tastes and dietary preferences.
