@@ -127,7 +127,7 @@ async def health_check():
 async def generate_prompt_tuners(
     request: DynamicTunersRequest, api_key: str = Depends(get_api_key)
 ):
-    print(f"Running /prompt/tuners request with config {request.config}")
+    logger.info(f"Running /prompt/tuners request with config {request.config}")
     try:
         chat_history_as_dicts = [
             message.model_dump() for message in request.existing_chat_history
@@ -137,7 +137,6 @@ async def generate_prompt_tuners(
             "{chat_history}", chat_history_str
         )
         prev_tuners_str = str(request.previous_tuners)
-        print(prev_tuners_str)
         prompt_with_prev_tuners = prompt_with_history.replace(
             "{previous_tuners}", prev_tuners_str
         )
@@ -164,7 +163,7 @@ async def generate_prompt_tuners(
 
 @app.post("/v1/chat")
 async def generate_message(request: ChatRequest, api_key: str = Depends(get_api_key)):
-    print(f"Running /chat request with config {request.config}")
+    logger.info(f"Running /chat request with config {request.config}")
     doc_retriever = get_retriever(request.config)
     try:
         chat_history_as_dicts = [
@@ -194,7 +193,7 @@ async def generate_message(request: ChatRequest, api_key: str = Depends(get_api_
 async def query_documents(
     request: DocsQueryRequest, api_key: str = Depends(get_api_key)
 ):
-    print(f"Running /recipes/query request with config {request.config}")
+    logger.info(f"Running /recipes/query request with config {request.config}")
     doc_retriever = get_retriever(request.config)
     try:
         document_objects = handle_vector_db_queries(request.queries, doc_retriever)
@@ -229,7 +228,7 @@ async def process_query(i, query, config):
 async def run_test_prompts(
     request: TestQueriesRequest, api_key: str = Depends(get_api_key)
 ):
-    print(f"Running /recipes/test_queries request with config {request.config}")
+    logger.info(f"Running /recipes/test_queries request with config {request.config}")
     queries = request.test_queries if request.test_queries else test_queries
 
     to_save = {}
