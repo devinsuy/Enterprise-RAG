@@ -107,6 +107,9 @@ class DynamicTunersRequest(BaseModel):
     # Any existing state from previous dialogue, or an empty list if this is the first prompt
     existing_chat_history: List[Message]
 
+    # Tuners generated from the previous iteration, if any
+    previous_tuners: Optional[List[str]] = []
+
     # Config overrides, NOTE: only generation configs are used since retrival is not relevant
     config: ConfigParams = Field(default_factory=default_config_params)
 

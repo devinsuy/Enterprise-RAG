@@ -136,9 +136,14 @@ async def generate_prompt_tuners(
         prompt_with_history = dynamic_prompt_tuners.replace(
             "{chat_history}", chat_history_str
         )
+        prev_tuners_str = str(request.previous_tuners)
+        print(prev_tuners_str)
+        prompt_with_prev_tuners = prompt_with_history.replace(
+            "{previous_tuners}", prev_tuners_str
+        )
         # Prompt already has chat history injected, empty history used to not provide it twice
         response_body, llm_message, updated_chat_history = message_handler(
-            [], prompt_with_history, request.config
+            [], prompt_with_prev_tuners, request.config
         )
         model_text_output = llm_message["content"][0]["text"]
         return ChatHistoryResponse(

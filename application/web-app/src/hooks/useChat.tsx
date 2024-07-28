@@ -44,12 +44,13 @@ const parseText = (text: string): string => {
   return text.replace(/<[^>]*>[^<]*<\/[^>]*>/g, '').replace(/<[^>]*\/>/g, '')
 }
 
-const fetchTuners = async (chatHistory: any): Promise<string[] | null> => {
+const fetchTuners = async (chatHistory: any, previousTuners: string[] | null): Promise<string[] | null> => {
   try {
     const response: ChatHistoryResponse = await axios.post(
       API_ENDPOINTS.tuners,
       {
         existing_chat_history: chatHistory,
+        previous_tuners: previousTuners ?? []
       },
       {
         headers: {
@@ -58,7 +59,7 @@ const fetchTuners = async (chatHistory: any): Promise<string[] | null> => {
       }
     )
     const { llm_response_text: llmResponseText } = response.data
-    // console.log(`Generated dynamic tuners: ${llmResponseText}`)
+    console.log(`Generated dynamic tuners: ${llmResponseText}`)
     return llmResponseText.split(',').slice(0, 5)
   } catch (error) {
     console.error(`Failed to fetch dynamic tuners: ${error}`)
@@ -113,7 +114,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       const llmMsg = { user: 'LLM', text: parsedResponseText, timestamp: getTimeStr() }
 
       // We got a response from LLM successfully, use it to generate new tuners
-      const newTuners = await fetchTuners(newChatHistory)
+      const newTuners = await fetchTuners(newChatHistory, prevTuners)
       setPrevTuners(tuners)
       setTuners(newTuners)
 

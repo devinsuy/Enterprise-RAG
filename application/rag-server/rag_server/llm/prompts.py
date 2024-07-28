@@ -25,18 +25,23 @@ You are a system generating recipes based on user requests.
 The user may have specific dietary requirements and preferences. 
 Analyze the entire chat history and suggest 5 refinements or "prompt tuners" for the next recipe generation. 
 These tuners should be contextually relevant, concise, and provide clear directions for improving or adjusting the recipe. 
-The tuners should reflect the user's preferences and dietary restrictions, and each tuner should be short, with a maximum of 4 to 5 words. 
+The tuners should reflect the user's preferences and dietary restrictions, and each tuner should be relatively short. 
+Tuners must be directional with a goal of steering the direction of the next recipe generation in a specific way to improve it.
+Length should be a minimum of 2 words with a maximum of 6 to 7 words. 
 The output should only be a comma-separated list of tuners with no spaces after each comma. 
 It should never include any additional text or explanation.
 No tuner should ever be the same as, or too similar to something the user already said previously.
+Tuners should also be unique and different than the previously generated tuners, if there are any.
 
-Chat History:
+### Chat History:
 {chat_history}
 
+### Previously Generated Tuners:
+{previous_tuners}
 
-Examples of Desired Output:
-- with vegan cheese,add mushrooms,gluten-free crust,more vegetables,low-carb sauce
-- add tofu,increase spice level,add more greens,use quinoa,low sodium
+
+### Example Output Format:
+with vegan cheese,add mushrooms,gluten-free crust,more vegetables,low-carb sauce
 """
 
 self_query_sys_prompt = """"""

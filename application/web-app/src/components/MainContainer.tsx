@@ -86,6 +86,7 @@ export const MainContainer: React.FC = () => {
       </Button>
       <DebugPanel open={isDebugOpen} onClose={handleDebugClose} />
       <InfoPanel open={isInfoOpen} onClose={handleInfoClose} />
+      <div style={{ paddingBottom: '10%' }}/>
     </Box>
   )
 }
