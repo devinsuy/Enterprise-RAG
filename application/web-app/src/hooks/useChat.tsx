@@ -14,6 +14,7 @@ interface ChatContextType {
   loading: boolean
   tabs: ChatTab[]
   activeTab: number
+  tuners: string[] | null
   sendMessage: (text: string) => void
   addTab: () => void
   switchTab: (id: number) => void
@@ -43,12 +44,39 @@ const parseText = (text: string): string => {
   return text.replace(/<[^>]*>[^<]*<\/[^>]*>/g, '').replace(/<[^>]*\/>/g, '')
 }
 
+const fetchTuners = async (chatHistory: any): Promise<string[] | null> => {
+  try {
+    const response: ChatHistoryResponse = await axios.post(
+      API_ENDPOINTS.tuners,
+      {
+        existing_chat_history: chatHistory,
+      },
+      {
+        headers: {
+          Authorization: API_KEY,
+        },
+      }
+    )
+    const { llm_response_text: llmResponseText } = response.data
+    // console.log(`Generated dynamic tuners: ${llmResponseText}`)
+    return llmResponseText.split(',')
+  } catch (error) {
+    console.error(`Failed to fetch dynamic tuners: ${error}`)
+    return null
+  }
+}
+
 export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   const [tabs, setTabs] = useState<ChatTab[]>([{ id: 0, messages: [], chatHistory: [], fnCalls: [] }])
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState<boolean>(false)
+  const [prevTuners, setPrevTuners] = useState<string[] | null>(null)
+  const [tuners, setTuners] = useState<string[] | null>(null)
 
   const sendMessage = async (text: string) => {
+    setPrevTuners(tuners)
+    setTuners(null) // Reset tuners, null state to indicate loading
+
     const newMessage: ChatMessage = { user: 'User', text, timestamp: getTimeStr() }
     setTabs(prevTabs =>
       prevTabs.map(tab =>
@@ -80,10 +108,14 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         }
       )
 
-      console.log(JSON.stringify(response))
       const { new_chat_history: newChatHistory, llm_response_text: llmResponseText, fn_calls: fnCalls } = response.data
       const parsedResponseText = parseText(llmResponseText)
       const llmMsg = { user: 'LLM', text: parsedResponseText, timestamp: getTimeStr() }
+
+      // We got a response from LLM successfully, use it to generate new tuners
+      const newTuners = await fetchTuners(newChatHistory)
+      setPrevTuners(tuners)
+      setTuners(newTuners)
 
       // Update the current tab with the new messages and chat history
       setTabs(prevTabs =>
@@ -99,6 +131,9 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         })
       )
     } catch (error) {
+      setTuners(prevTuners) // Restore tuners
+      setPrevTuners(null)
+
       console.error('Error sending message:', error)
       const errorMessage: ChatMessage = { user: 'System', text: 'Error sending message. Please try again.', timestamp: getTimeStr() }
       setTabs(prevTabs =>
@@ -120,7 +155,7 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
   }
 
   return (
-    <ChatContext.Provider value={{ tabs, activeTab, sendMessage, addTab, switchTab, loading }}>
+    <ChatContext.Provider value={{ tabs, activeTab, sendMessage, addTab, switchTab, loading, tuners }}>
       {children}
     </ChatContext.Provider>
   )
