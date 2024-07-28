@@ -44,7 +44,7 @@ export const MainContainer: React.FC = () => {
 
   return (
     <Box
-      sx={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f0f0', paddingBottom: '10%' }}
+      sx={{ display: 'flex', flexDirection: 'column', height: '90vh', backgroundColor: '#f0f0f0' }}
       onClick={handleClickAway}
     >
       <Box
@@ -64,9 +64,9 @@ export const MainContainer: React.FC = () => {
             paddingBottom: '3%'
           }}
         >
-          <Typography variant="h5" component="h2" style={{ paddingBottom: '1%' }}>
+          {/* <Typography variant="h5" component="h2" style={{ paddingBottom: '1%' }}>
             {introHeading}
-          </Typography>
+          </Typography> */}
           <Box component="img" src={logo} alt="Logo" sx={{ height: '146px', width: '239px' }} />
         </Box>
         <Typography variant="body1" component="p">
@@ -76,12 +76,12 @@ export const MainContainer: React.FC = () => {
           </Link>
           {closingText}
         </Typography>
-        <Button variant="contained" color="primary" onClick={handleInfoOpen} sx={{ marginTop: '20px', cursor: 'pointer' }}>
+        <Button variant="contained" color="primary" onClick={handleInfoOpen} sx={{ position: 'fixed', top: 70, right: 17, marginTop: '20px', cursor: 'pointer' }}>
           Learn How To Use
         </Button>
       </Box>
       <ChatContainer />
-      <Button variant="contained" color="primary" onClick={handleDebugOpen} sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+      <Button variant="contained" color="primary" onClick={handleDebugOpen} sx={{ position: 'fixed', top: 140, right: 15 }}>
         Open Debug Panel
       </Button>
       <DebugPanel open={isDebugOpen} onClose={handleDebugClose} />

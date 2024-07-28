@@ -59,7 +59,7 @@ const fetchTuners = async (chatHistory: any): Promise<string[] | null> => {
     )
     const { llm_response_text: llmResponseText } = response.data
     // console.log(`Generated dynamic tuners: ${llmResponseText}`)
-    return llmResponseText.split(',')
+    return llmResponseText.split(',').slice(0, 5)
   } catch (error) {
     console.error(`Failed to fetch dynamic tuners: ${error}`)
     return null
