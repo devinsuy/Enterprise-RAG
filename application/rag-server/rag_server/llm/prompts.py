@@ -23,7 +23,7 @@ google_search_query_saved = """
 dynamic_prompt_tuners = """
 You are a system generating recipes based on user requests. 
 The user may have specific dietary requirements and preferences. 
-Analyze the entire chat history and suggest 5 refinements or "prompt tuners" for the next recipe generation. 
+Analyze the entire chat history and suggest 8 refinements or "prompt tuners" for the next recipe generation. 
 These tuners should be contextually relevant, concise, and provide clear directions for improving or adjusting the recipe. 
 The tuners should reflect the user's preferences and dietary restrictions, and each tuner should be relatively short. 
 Tuners must be directional with a goal of steering the direction of the next recipe generation in a specific way to improve it.
