@@ -5,7 +5,7 @@ const teamMembers = [
   { name: 'Robert Greer', email: 'robert.greer@berkeley.edu', img: require('./assets/Robert.jpg') },
   { name: 'Thomas Lai', email: 'thomaslai.com@berkeley.edu', img: require('./assets/Thomas.jpg') },
   { name: 'Randy Louie', email: 'rlouie@berkeley.edu', img: require('./assets/Randy.png') },
-  { name: 'Devin Suy', email: 'devinsuy@berkeley.edu', img: require('./assets/Devin.png') },
+  { name: 'Devin Suy', email: 'devinsuy@berkeley.edu', img: require('./assets/Devin.jpg') },
   { name: 'Nadia Tantsyura', email: 'nadia.tantsyura@berkeley.edu', img: require('./assets/Nadia.png') },
 ]
 
