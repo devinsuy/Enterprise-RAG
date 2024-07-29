@@ -5,9 +5,9 @@ from time import sleep
 
 import requests
 
-endpoint = "http://localhost:8000/v1/chat"
+endpoint = "https://api.scraps2scrumptious.com/v1/chat"
 headers = {
-    "Authorization": "", # REMOVED
+    "Authorization": "1ffdb6d4ca73edd45497c1defd4902d06bc0f17066207ff9499ccf1f80528255",  # REMOVED
     "Content-Type": "application/json",
 }
 
@@ -71,7 +71,7 @@ def make_request():
 
 # Function to run multiple requests concurrently
 def run_requests_concurrently(num_requests):
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(make_request) for _ in range(num_requests)]
         for future in futures:
             try:

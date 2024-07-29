@@ -38,7 +38,7 @@ async def make_request(session, payload):
     async with session.post(api_endpoint, headers=headers, json=payload) as response:
         if response.status != 200:
             logger.error(
-                f"Failed request with payload: {payload} - Status code: {response.status}"
+                f"Failed request with payload: {payload} - response: {response}"
             )
         result = await response.json()
         return result
@@ -66,7 +66,7 @@ async def handle_permutation(session, semaphore, permutation):
 # Main function to run all permutations with concurrency
 async def main():
     async with aiohttp.ClientSession() as session:
-        semaphore = asyncio.Semaphore(3)  # Limit to 3 concurrent requests
+        semaphore = asyncio.Semaphore(4)  # Limit to 4 concurrent requests
 
         tasks = [
             handle_permutation(session, semaphore, permutation)
