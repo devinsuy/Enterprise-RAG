@@ -1,10 +1,13 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import requests
 from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from constants import GCP_CSE_ID, NUM_SEARCH_RESULTS
 
 logger = logging.getLogger(__name__)
+
 
 # Given a URL, fetch the page's text content
 def get_page_content(url):
@@ -22,10 +25,13 @@ def get_page_content(url):
         logger.error(f'Failed to fetch page content for URL "{url}": {e}')
         return ""
 
+
 # Executes a list of queries using the Google Custom Search API and returns a list of search results.
 # Returns:
 # A dictionary where each query maps to a list of search results. Each search result contains the title and snippet.
-def handle_google_web_search(queries, api_key, cse_id=GCP_CSE_ID, num_results=NUM_SEARCH_RESULTS):
+def handle_google_web_search(
+    queries, api_key, cse_id=GCP_CSE_ID, num_results=NUM_SEARCH_RESULTS
+):
     # Ensure queries is a list of strings
     if isinstance(queries, str):
         queries = [queries]
@@ -60,7 +66,9 @@ def handle_google_web_search(queries, api_key, cse_id=GCP_CSE_ID, num_results=NU
 
     with ThreadPoolExecutor() as executor:
         # Fetch search results in parallel
-        future_to_query = {executor.submit(fetch_search_results, query): query for query in queries}
+        future_to_query = {
+            executor.submit(fetch_search_results, query): query for query in queries
+        }
 
         for future in as_completed(future_to_query):
             query, search_results = future.result()
@@ -70,7 +78,9 @@ def handle_google_web_search(queries, api_key, cse_id=GCP_CSE_ID, num_results=NU
 
             # Fetch page content in parallel for each search result item
             items = search_results.get("items", [])
-            future_to_item = {executor.submit(fetch_page_content, item): item for item in items}
+            future_to_item = {
+                executor.submit(fetch_page_content, item): item for item in items
+            }
             results = [future.result() for future in as_completed(future_to_item)]
 
             all_search_results[query] = results

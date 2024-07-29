@@ -4,6 +4,7 @@
 import asyncio
 import itertools
 import json
+import logging
 import time
 
 import aiohttp
@@ -25,43 +26,52 @@ api_endpoint = "https://api.scraps2scrumptious.com/v1/recipes/test_queries"
 api_key = ""  # REDACTED
 headers = {"Authorization": api_key, "Content-Type": "application/json"}
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 # Function to make a request
 async def make_request(session, payload):
     async with session.post(api_endpoint, headers=headers, json=payload) as response:
+        if response.status != 200:
+            logger.error(
+                f"Failed request with payload: {payload} - Status code: {response.status}"
+            )
         result = await response.json()
         return result
 
 
 # Function to handle a single permutation
-async def handle_permutation(session, permutation):
-    temperature, top_k, top_p, retriever, gatekeeper_query = permutation
-    payload = {
-        "use_gatekeeper_queries": gatekeeper_query,
-        "config": {
-            "temperature": temperature,
-            "top_p": top_p,
-            "top_k": top_k,
-            "retriever": retriever,
-        },
-    }
-    print(f"Sending request with payload: {payload}")
-    # result = await make_request(session, payload)
-    # print(f"Received response: {result}")
-    await asyncio.sleep(1)  # Add short delay
+async def handle_permutation(session, semaphore, permutation):
+    async with semaphore:
+        temperature, top_k, top_p, retriever, gatekeeper_query = permutation
+        payload = {
+            "use_gatekeeper_queries": gatekeeper_query,
+            "config": {
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+                "retriever": retriever,
+            },
+        }
+        logger.info(f"Sending request with payload: {payload}")
+        result = await make_request(session, payload)
+        logger.info(f"Received response: {result}")
+        await asyncio.sleep(1)  # Add short delay
 
 
 # Main function to run all permutations with concurrency
 async def main():
     async with aiohttp.ClientSession() as session:
-        tasks = []
         semaphore = asyncio.Semaphore(3)  # Limit to 3 concurrent requests
 
-        for permutation in permutations:
-            await semaphore.acquire()
-            task = asyncio.create_task(handle_permutation(session, permutation))
-            task.add_done_callback(lambda t: semaphore.release())
-            tasks.append(task)
+        tasks = [
+            handle_permutation(session, semaphore, permutation)
+            for permutation in permutations
+        ]
 
         await asyncio.gather(*tasks)
 
