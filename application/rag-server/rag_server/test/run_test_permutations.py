@@ -22,7 +22,7 @@ permutations = list(
 
 # API endpoint and headers
 api_endpoint = "https://api.scraps2scrumptious.com/v1/recipes/test_queries"
-api_key = "1ffdb6d4ca73edd45497c1defd4902d06bc0f17066207ff9499ccf1f80528255"  # REDACTED
+api_key = ""  # REDACTED
 headers = {"Authorization": api_key, "Content-Type": "application/json"}
 
 
