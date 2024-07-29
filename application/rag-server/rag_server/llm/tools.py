@@ -5,7 +5,7 @@ recipe_db_query_tool = {
   This function allows the model to generate and execute multiple queries as necessary to gather comprehensive context,
   ensuring accurate and thorough responses to user queries specifically related to recipes.
   Each recipe document includes details such as name, description, recipe category, ingredients, instructions, cook time, 
-  community rating, and review count
+  community rating, and review count. NEVER escape the quotes in your provided input.
   """,
     "input_schema": {
         "type": "object",
@@ -30,7 +30,7 @@ google_web_search_tool = {
   This function allows the model to search for information it is unsure about, such as
   ingredient substitutions, cooking techniques, nutritional information, or other specific
   knowledge not contained within the recipe vector database, providing accurate and up-to-date
-  answers to user queries.
+  answers to user queries. NEVER escape the quotes in your provided input.
   """,
     "input_schema": {
         "type": "object",

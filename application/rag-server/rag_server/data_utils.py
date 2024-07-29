@@ -1,20 +1,44 @@
+import json
 import logging
 import os
-import uuid
 
 import boto3
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import Qdrant
-from qdrant_client import QdrantClient, models
+from qdrant_client import QdrantClient
 
-from constants import (BUCKET_NAME, COARSE_LAMBDA, COARSE_SEARCH_TYPE,
-                       COARSE_TOP_K, DOWNLOAD_PATH, EMBEDDING_MODEL_ID,
+from constants import (BUCKET_NAME, DOWNLOAD_PATH, EMBEDDING_MODEL_ID,
                        FILE_KEY, QDRANT_COLLECTION_NAME, QDRANT_HOST_URL,
                        QDRANT_SNAPSHOT_URL)
 
 logger = logging.getLogger(__name__)
+
+# Ensure AWS creds always load before bedrock client is instantiated
+load_dotenv()
+
+secrets_client = boto3.client("secretsmanager", region_name="us-east-1")
+
+
+# Util to fetch key value secrets from AWS Secrets Manager
+def get_secret(secret_name, is_json=False):
+    try:
+        get_secret_value_response = secrets_client.get_secret_value(
+            SecretId=secret_name
+        )
+    except Exception as e:
+        raise e
+
+    secret = get_secret_value_response["SecretString"]
+
+    if is_json:
+        return json.loads(secret)
+    else:
+        return secret
 
 
 def download_and_load_data_if_not_exists(bucket_name, file_key, download_path):

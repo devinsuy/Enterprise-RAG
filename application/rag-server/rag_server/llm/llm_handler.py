@@ -4,12 +4,12 @@ import logging
 import boto3
 from dotenv import load_dotenv
 
-from constants import MODEL_ID, RETRIEVER
-from data_utils import format_docs, handle_vector_db_queries
+from constants import MODEL_ID
+from data_utils import format_docs, get_secret, handle_vector_db_queries
+from google_search import handle_google_web_search
 
 from .message_utils import generate_message, generate_tool_message
-from .prompts import baseline_sys_prompt
-from .tools import recipe_db_query_tool
+from .tools import google_web_search_tool, recipe_db_query_tool
 
 # Ensure AWS creds always load before bedrock client is instantiated
 load_dotenv()
@@ -17,13 +17,14 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
+google_search_api_key = get_secret("google_search_api_key")
 
 
 def query_bedrock_llm(messages, config):
     payload = {
         "anthropic_version": "bedrock-2023-05-31",
         "messages": messages,
-        "tools": [recipe_db_query_tool],
+        "tools": [recipe_db_query_tool, google_web_search_tool],
         "system": str(config.system_prompt),
         "max_tokens": int(config.max_tokens),
         "temperature": float(config.temperature),
@@ -113,8 +114,7 @@ def handle_function_calls(tool_call_message_content, document_retriever):
                 tool_results.append(fn_result)
                 continue
 
-            model_msg = f"Model called {fn_name} with args {fn_args}"
-            logger.info(model_msg)
+            logger.info(f"Model called {fn_name} with args {fn_args}")
             context_docs = handle_vector_db_queries(
                 fn_args["queries"], document_retriever
             )
@@ -122,7 +122,23 @@ def handle_function_calls(tool_call_message_content, document_retriever):
             fn_result["content"] = context_str
             tool_results.append(fn_result)
 
-        # TODO: handle web search invocation here
+        elif fn_name == "google_web_search":
+            if "queries" not in fn_args:
+                logger.error(
+                    f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping.."
+                )
+                fn_result["content"] = ""
+                fn_result["is_error"] = True
+                tool_results.append(fn_result)
+                continue
+
+            logger.info(f"Model called {fn_name} with args {fn_args}")
+            search_results = handle_google_web_search(
+                fn_args["queries"], google_search_api_key
+            )
+            search_results_str = json.dumps(search_results)
+            fn_result["content"] = search_results_str
+            tool_results.append(fn_result)
 
         else:
             logger.error(f"ERROR: Attempted call to unknown function {fn_name}")
