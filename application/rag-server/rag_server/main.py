@@ -197,11 +197,18 @@ async def query_documents(
     doc_retriever = get_retriever(request.config)
     try:
         document_objects = handle_vector_db_queries(request.queries, doc_retriever)
-        serialized_docs = [
-            DocumentResponse(page_content=doc.page_content, metadata=doc.metadata)
-            for doc in document_objects
-        ]
-        return DocsQueryResponse(documents=serialized_docs)
+        query_results = {}
+
+        # Populate the dictionary with DocumentResponse objects
+        for query, doc in document_objects:
+            if query not in query_results:
+                query_results[query] = []
+            document = DocumentResponse(
+                page_content=doc.page_content, metadata=doc.metadata
+            )
+            query_results[query].append(document)
+
+        return DocsQueryResponse(queries=query_results)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

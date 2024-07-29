@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, validator
@@ -170,7 +170,7 @@ class DocumentResponse(BaseModel):
 
 
 class DocsQueryResponse(BaseModel):
-    documents: List[DocumentResponse]
+    queries: Dict[str, List[DocumentResponse]]
 
     class Config:
         extra = "forbid"

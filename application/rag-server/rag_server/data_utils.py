@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import logging
 import os
@@ -230,7 +231,7 @@ def restore_db_instance_from_url(
 
 
 def handle_vector_db_queries(queries, retriever):
-    context_docs = []
+    context_docs = {}
 
     # Ensure queries is a list of strings
     if isinstance(queries, str):
@@ -239,27 +240,43 @@ def handle_vector_db_queries(queries, retriever):
         logger.error("Queries should be a list of strings.")
         return []
 
-    for query in queries:
-        query_results = retriever.invoke(query)
-        context_docs.extend(query_results)
+    def fetch_query_results(query):
+        return retriever.invoke(query)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_query = {
+            executor.submit(fetch_query_results, query): query for query in queries
+        }
+        for future in concurrent.futures.as_completed(future_to_query):
+            query = future_to_query[future]
+            try:
+                query_results = future.result()
+                context_docs[query] = query_results
+            except Exception as e:
+                logger.error(f"Error fetching query results for query {query}: {e}")
 
     return context_docs
-
 
 
 def format_docs(docs):
     formatted_docs = []
     excluded_columns = ["name", "recipe_category", "description"]
 
-    for doc in docs:
-        doc_content = doc.page_content
-        metadata_content = "\n".join(
-            f"{key}: {value}"
-            for key, value in doc.metadata.items()
-            if key not in excluded_columns and value != "No Data Available"
-        )
-        formatted_doc = f"{doc_content}\n\nMetadata:\n{metadata_content}"
-        formatted_docs.append(formatted_doc)
+    for query, documents in docs.items():
+        query_header = f"Query: {query}\n"
+        formatted_docs.append(query_header)
 
-    content = "\n\n---\n\n".join(formatted_docs)
+        for doc in documents:
+            doc_content = doc.page_content
+            metadata_content = "\n".join(
+                f"{key}: {value}"
+                for key, value in doc.metadata.items()
+                if key not in excluded_columns and value != "No Data Available"
+            )
+            formatted_doc = f"{doc_content}\n\nMetadata:\n{metadata_content}"
+            formatted_docs.append(formatted_doc)
+
+        formatted_docs.append("\n---\n")  # Adding a separator between different queries
+
+    content = "\n".join(formatted_docs)
     return content
