@@ -24,6 +24,7 @@ langchain-openai = "^0.1.16"
 lark = "^1.1.9"
 langchain-qdrant = "^0.1.2"
 gunicorn = "^22.0.0"
+beautifulsoup4 = "^4.12.3"
 
 [tool.poetry.dev-dependencies]
 black = "^24.4.2"
