@@ -210,7 +210,7 @@ async def process_query(i, query, config):
     entry = {
         "Query_Question_No": i,
         "Query_Question": query,
-        "Config_Params": config.model_dump(),  # Include the full config used for generation
+        **config.model_dump()  # Flatten config params into the main dictionary
     }
     try:
         chat_request = ChatRequest(
@@ -253,7 +253,7 @@ async def run_test_prompts(
         results_file_name = f"test_queries_results{config_part}_{current_time}.json"
 
     try:
-        file_content = json.dumps(to_save)
+        file_content = json.dumps(to_save, indent=4)
         s3_client.put_object(
             Bucket=BUCKET_NAME_TESTING, Key=results_file_name, Body=file_content
         )
