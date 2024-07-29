@@ -210,7 +210,7 @@ async def process_query(i, query, config):
     entry = {
         "Query_Question_No": i,
         "Query_Question": query,
-        **config.model_dump()  # Flatten config params into the main dictionary
+        **config.model_dump(),  # Flatten config params into the main dictionary
     }
     try:
         chat_request = ChatRequest(

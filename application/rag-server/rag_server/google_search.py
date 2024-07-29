@@ -36,6 +36,13 @@ A dictionary where each query maps to a list of search results. Each search resu
 def handle_google_web_search(
     queries, api_key, cse_id=GCP_CSE_ID, num_results=NUM_SEARCH_RESULTS
 ):
+    # Ensure queries is a list of strings
+    if isinstance(queries, str):
+        queries = [queries]
+    elif not isinstance(queries, list) or not all(isinstance(q, str) for q in queries):
+        logger.error("Queries should be a list of strings.")
+        return {}
+
     # The base URL for the Google Custom Search API
     api_url = "https://www.googleapis.com/customsearch/v1"
 
@@ -44,16 +51,17 @@ def handle_google_web_search(
     for query in queries:
         logger.info(f"Fetching google search results for query: {query}")
         params = {"key": api_key, "cx": cse_id, "q": query, "num": num_results}
-        response = requests.get(api_url, params=params)
-
-        # Raise an exception if the request was unsuccessful
-        response.raise_for_status()
+        try:
+            response = requests.get(api_url, params=params)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"Error fetching search results for query {query}: {e}")
+            continue
 
         # Parse the JSON response
         search_results = response.json()
 
         # Extract the relevant information from the search results
-        urls = [item.get("link") for item in search_results.get("items")]
         results = []
         for item in search_results.get("items", []):
             search_result_url = item.get("link")

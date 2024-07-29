@@ -231,13 +231,20 @@ def restore_db_instance_from_url(
 
 def handle_vector_db_queries(queries, retriever):
     context_docs = []
+
+    # Ensure queries is a list of strings
     if isinstance(queries, str):
         queries = [queries]
+    elif not isinstance(queries, list) or not all(isinstance(q, str) for q in queries):
+        logger.error("Queries should be a list of strings.")
+        return []
+
     for query in queries:
         query_results = retriever.invoke(query)
         context_docs.extend(query_results)
 
     return context_docs
+
 
 
 def format_docs(docs):
