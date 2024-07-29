@@ -229,7 +229,12 @@ async def run_test_prompts(
     request: TestQueriesRequest, api_key: str = Depends(get_api_key)
 ):
     logger.info(f"Running /recipes/test_queries request with config {request.config}")
-    queries = request.test_queries if request.test_queries else test_queries
+    if request.test_queries:
+        queries = request.test_queries
+    elif request.use_gatekeeper_queries:
+        queries = gate_keeper_queries
+    else:
+        queries = test_queries
 
     to_save = {}
     tasks = [
