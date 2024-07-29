@@ -11,6 +11,8 @@ Before answering, follow these requirements:
 
 - NEVER exceed a MAXIMUM of 3 calls to the query_food_recipe_vector_db function.
 
+- NEVER call the google_web_search function more than once.
+
 - Analyze the user's requirements and NEVER provide a recipe that violates ANY of the user's requirements.
 
 - In your final response, NEVER include any XML tags with information about your thoughts. It is okay to include XML and analysis text in any message except your final one with the recipes and instructions.
