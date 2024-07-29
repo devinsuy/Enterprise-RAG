@@ -258,7 +258,7 @@ async def run_test_prompts(
     else:
         current_time = datetime.now().strftime("%m-%d-%H-%M")
         config_part = (
-            f"_{request.config.retriever}_top_p_{request.config.top_p}_top_k_{request.config.top_k}_temp_{request.config.temperature}"
+            f"_gatekeeper_{request.use_gatekeeper_queries}_{request.config.retriever}_top_p_{request.config.top_p}_top_k_{request.config.top_k}_temp_{request.config.temperature}"
             if request.config
             else "default_config"
         )
