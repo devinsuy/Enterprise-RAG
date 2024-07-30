@@ -2,6 +2,7 @@ import json
 import logging
 
 import boto3
+from botocore.config import Config
 from dotenv import load_dotenv
 
 from constants import MODEL_ID
@@ -16,7 +17,14 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
+boto_config = Config(
+    read_timeout=100000,
+)
+bedrock_client = boto3.client(
+    "bedrock-runtime",
+    config=boto_config,
+    region_name="us-east-1",
+)
 google_search_api_key = get_secret("google_search_api_key")
 
 

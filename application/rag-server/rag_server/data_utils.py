@@ -1,11 +1,15 @@
+import asyncio
 import concurrent.futures
 import json
 import logging
 import os
+from traceback import format_exc
 
 import boto3
 import pandas as pd
 import requests
+from botocore.config import Config
+from botocore.exceptions import BotoCoreError, ClientError
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain.docstore.document import Document
@@ -22,7 +26,50 @@ logger = logging.getLogger(__name__)
 # Ensure AWS creds always load before bedrock client is instantiated
 load_dotenv()
 
-secrets_client = boto3.client("secretsmanager", region_name="us-east-1")
+boto_config = Config(
+    read_timeout=100000,
+)
+
+logger.info("Initializing s3 client")
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    config=boto_config,
+    region_name="us-east-1",
+)
+
+
+logger.info("Initializing secrets client")
+secrets_client = boto3.client(
+    "secretsmanager",
+    region_name="us-east-1",
+    config=boto_config,
+)
+
+
+# Update upload_to_s3 function in data_utils.py
+async def upload_to_s3(bucket_name, file_name, file_content):
+    s3_client = boto3.client("s3")
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_name)
+        existing_content = json.loads(response["Body"].read().decode("utf-8"))
+        existing_content.update(json.loads(file_content))
+    except s3_client.exceptions.NoSuchKey:
+        existing_content = json.loads(file_content)
+    except Exception as e:
+        logger.error(f"Error retrieving existing S3 content: {e}\n{format_exc()}")
+        raise
+
+    try:
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=file_name,
+            Body=json.dumps(existing_content, indent=4),
+        )
+    except Exception as e:
+        logger.error(f"Error uploading to S3: {e}\n{format_exc()}")
+        raise
 
 
 # Util to fetch key value secrets from AWS Secrets Manager

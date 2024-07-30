@@ -30,8 +30,9 @@ SELF_QUERY_API = "OpenAI"  # OpenAI or Azure
 SELF_QUERY_MODEL = "gpt-4o-mini"
 
 # for configuration information during testing
-BUCKET_NAME_TESTING = "test-api-results"
+BUCKET_NAME_TESTING = "test-api-results-2"
 config_test_dict = {var: eval(var) for var in dir() if not var.startswith("__")}
 
 GCP_CSE_ID = "b20454e29b3b14095"
 NUM_SEARCH_RESULTS = "3"
+WEB_MAX_CONTENT_LENGTH = 5000

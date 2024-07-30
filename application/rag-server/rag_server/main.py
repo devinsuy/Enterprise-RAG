@@ -2,10 +2,11 @@ import asyncio
 import json
 import logging
 import os
+from asyncio import Semaphore
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from traceback import format_exc
 
-import boto3
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,11 +18,15 @@ from api_types import (ChatHistoryResponse, ChatRequest, CoarseSearchType,
                        DocumentResponse, DynamicTunersRequest,
                        TestQueriesRequest)
 from constants import BUCKET_NAME_TESTING
-from data_utils import handle_vector_db_queries, initialize_vector_db
+from data_utils import (handle_vector_db_queries, initialize_vector_db,
+                        upload_to_s3)
 from llm.llm_handler import message_handler, run_chat_loop
 from llm.prompts import dynamic_prompt_tuners
 from retrieval_utils import initialize_retrieval_chain, intialize_reranker
 from test_queries import gate_keeper_queries, test_queries
+
+# Limit concurrency
+TEST_QUERY_SEMAPHORE = Semaphore(5)
 
 # Load env vars
 load_dotenv()
@@ -33,13 +38,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
-
-logger.info("Initialize s3 client")
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-)
 
 # DB & retriever init, reuse singleton instances
 logger.info("Initializing document db retrievers")
@@ -70,7 +68,7 @@ API_KEY_NAME = "Authorization"
 API_KEY = os.getenv("API_KEY")
 
 # We would never do this in a real server, but it's convenient in debugging for now
-logger.info(f"Server is configured to expect api key: {API_KEY}")
+logger.info(f"Server is configured to expect API key: {API_KEY}")
 
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
 
@@ -120,8 +118,6 @@ async def get_api_key(request: Request, api_key_header: str = Depends(api_key_he
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
-    prompt = prompt.replace("{chat_history}", chat_history)
-
 
 @app.post("/v1/prompt/tuners")
 async def generate_prompt_tuners(
@@ -157,7 +153,7 @@ async def generate_prompt_tuners(
         logger.error(f"Value error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}\n{format_exc()}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -185,7 +181,7 @@ async def generate_message(request: ChatRequest, api_key: str = Depends(get_api_
         logger.error(f"Value error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}\n{format_exc()}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -210,32 +206,39 @@ async def query_documents(
 
         return DocsQueryResponse(queries=query_results)
     except Exception as e:
+        logger.error(f"Unexpected error in query_documents: {e}\n{format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 async def process_query(i, query, config):
-    entry = {
-        "Query_Question_No": i,
-        "Query_Question": query,
-        **config.model_dump(),  # Flatten config params into the main dictionary
-    }
-    try:
-        chat_request = ChatRequest(
-            existing_chat_history=[], prompt=query, config=config
-        )
-        response = await generate_message(chat_request)
-        entry["Query_Response"] = response.llm_response_text
-    except Exception as e:
-        err = f"Error occurred during generation: {e}"
-        entry["Query_Response"] = err
-    return i, entry
+    async with TEST_QUERY_SEMAPHORE:
+        entry = {
+            "Query_Question_No": i,
+            "Query_Question": query,
+            **config.model_dump(),  # Flatten config params into the main dictionary
+        }
+        try:
+            chat_request = ChatRequest(
+                existing_chat_history=[], prompt=query, config=config
+            )
+            response = await generate_message(chat_request)
+            entry["Query_Response"] = response.llm_response_text
+        except Exception as e:
+            err = f"Error occurred during generation: {e}\n{format_exc()}"
+            logger.error(err)
+            entry["Query_Response"] = err
+        return i, entry
 
 
 @app.post("/v1/recipes/test_queries")
 async def run_test_prompts(
     request: TestQueriesRequest, api_key: str = Depends(get_api_key)
 ):
-    logger.info(f"Running /recipes/test_queries request with config {request.config}")
+    logger = logging.getLogger(__name__)
+
+    if not request.test_queries and not request.use_gatekeeper_queries:
+        raise HTTPException(status_code=400, detail="No queries provided.")
+
     if request.test_queries:
         queries = request.test_queries
     elif request.use_gatekeeper_queries:
@@ -243,32 +246,35 @@ async def run_test_prompts(
     else:
         queries = test_queries
 
-    to_save = {}
-    tasks = [
-        process_query(i, query, request.config)
-        for i, query in enumerate(queries, start=1)
-    ]
-    results = await asyncio.gather(*tasks)
+    existing_state = request.existing_state or {}
+    query = queries.pop(0)
+    index = len(existing_state) + 1
 
-    for i, result in results:
-        to_save[f"Entry_{i}"] = result
+    logger.info(f"Processing query {index}/{len(queries) + index}: {query}")
 
-    if request.file_name:
-        results_file_name = request.file_name
-    else:
+    result = await process_query(index, query, request.config)
+    existing_state[f"Entry_{index}"] = result
+
+    if "file_name" not in existing_state:
         current_time = datetime.now().strftime("%m-%d-%H-%M")
-        config_part = (
-            f"_gatekeeper_{request.use_gatekeeper_queries}_{request.config.retriever}_top_p_{request.config.top_p}_top_k_{request.config.top_k}_temp_{request.config.temperature}"
-            if request.config
-            else "default_config"
-        )
-        results_file_name = f"test_queries_results{config_part}_{current_time}.json"
+        config_part = f"_gatekeeper_{request.use_gatekeeper_queries}_{request.config.retriever}_top_p_{request.config.top_p}_top_k_{request.config.top_k}_temp_{request.config.temperature}"
+        file_name = f"test_queries_results{config_part}_{current_time}.json"
+        existing_state["file_name"] = file_name
+    else:
+        file_name = existing_state["file_name"]
 
     try:
-        file_content = json.dumps(to_save, indent=4)
-        s3_client.put_object(
-            Bucket=BUCKET_NAME_TESTING, Key=results_file_name, Body=file_content
-        )
-        return to_save
+        file_content = json.dumps(existing_state, indent=4)
+        await upload_to_s3(BUCKET_NAME_TESTING, file_name, file_content)
     except Exception as e:
+        logger.error(f"Error saving to S3: {e}\n{format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error saving to S3: {e}")
+
+    if not queries:
+        return {"status": "completed", "state": existing_state}
+
+    return {
+        "status": "in_progress",
+        "state": existing_state,
+        "remaining_queries": queries,
+    }

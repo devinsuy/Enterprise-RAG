@@ -179,8 +179,8 @@ class DocsQueryResponse(BaseModel):
 class TestQueriesRequest(BaseModel):
     test_queries: Optional[List[str]] = None
     use_gatekeeper_queries: Optional[bool] = False
-    config: ConfigParams = Field(default_factory=default_config_params)
-    file_name: Optional[str] = None
+    config: ConfigParams = Field(default_factory=ConfigParams)
+    existing_state: Optional[Dict[str, Any]] = None
 
     class Config:
         extra = "forbid"
