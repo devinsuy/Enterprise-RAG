@@ -1,15 +1,19 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 
 import requests
 from bs4 import BeautifulSoup
 
-from constants import GCP_CSE_ID, NUM_SEARCH_RESULTS
+from constants import GCP_CSE_ID, NUM_SEARCH_RESULTS, WEB_MAX_CONTENT_LENGTH
 
 logger = logging.getLogger(__name__)
 
+FETCH_URL_LIMIT = 3  # Limit the number of URLs to fetch per search result
 
-# Given a URL, fetch the page's text content
+
+# Given a URL, fetch the page's text content. We truncate the website content
+# to provide context of the site but without exceeding the model context window
+# without truncation we quickly encounter server errors from bedrock
 def get_page_content(url):
     logger.info(f"Fetching page content for URL: {url}")
     try:
@@ -19,6 +23,10 @@ def get_page_content(url):
 
         # Extract all text content from the page
         text_content = soup.get_text(separator="\n")
+
+        # Truncate content to a maximum length
+        if len(text_content) > WEB_MAX_CONTENT_LENGTH:
+            text_content = text_content[:WEB_MAX_CONTENT_LENGTH]
 
         return text_content
     except requests.exceptions.RequestException as e:
@@ -71,17 +79,41 @@ def handle_google_web_search(
         }
 
         for future in as_completed(future_to_query):
-            query, search_results = future.result()
+            try:
+                query, search_results = future.result(timeout=5)
+            except TimeoutError:
+                logger.error(
+                    f"Timeout occurred while fetching search results for query {query}"
+                )
+                all_search_results[query] = []
+                continue
+            except Exception as e:
+                logger.error(
+                    f"Unexpected error while fetching search results for query {query}: {e}"
+                )
+                all_search_results[query] = []
+                continue
+
             if search_results is None:
                 all_search_results[query] = []
                 continue
 
-            # Fetch page content in parallel for each search result item
-            items = search_results.get("items", [])
+            # Fetch page content in parallel for each search result item, limit to the first 3 URLs
+            items = search_results.get("items", [])[:FETCH_URL_LIMIT]
             future_to_item = {
                 executor.submit(fetch_page_content, item): item for item in items
             }
-            results = [future.result() for future in as_completed(future_to_item)]
+            results = []
+            for future in as_completed(future_to_item):
+                try:
+                    result = future.result(timeout=5)
+                except TimeoutError:
+                    logger.error(f"Timeout occurred while fetching page content")
+                    result = {"title": "Timeout", "snippet": "", "page_content": ""}
+                except Exception as e:
+                    logger.error(f"Unexpected error while fetching page content: {e}")
+                    result = {"title": "Error", "snippet": "", "page_content": ""}
+                results.append(result)
 
             all_search_results[query] = results
 
