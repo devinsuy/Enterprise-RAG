@@ -51,8 +51,8 @@ const fetchTuners = async (chatHistory: any, previousTuners: string[] | null): P
       }),
     })
     const data: ChatHistoryResponse = await response.json()
-    const { llm_response_text: llmResponseText } = data.data
-    console.log(`Generated dynamic tuners: ${llmResponseText}`)
+    const { llm_response_text: llmResponseText } = data
+    // console.log(`Generated dynamic tuners: ${llmResponseText}`)
     return llmResponseText.split(',').slice(0, 8)
   } catch (error) {
     console.error(`Failed to fetch dynamic tuners: ${error}`)
@@ -136,8 +136,8 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        console.log(`CHUNK IS: ${JSON.stringify(buffer)}`)
-        console.log('================================')
+        // console.log(`CHUNK IS: ${JSON.stringify(buffer)}`)
+        // console.log('================================')
         const lines = buffer.split('\n')
 
         for (let i = 0; i < lines.length - 1; i++) {
@@ -179,6 +179,22 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         }
         buffer = lines[lines.length - 1] // Keep the last line if it's partial
       }
+
+      // Update the current tab with the full accumulated message
+      setTabs(prevTabs =>
+        prevTabs.map(tab => {
+          if (tab.id !== activeTab) return tab
+          const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.id !== loadingMessageId)
+          const llmMsg = { id: `msg-${Date.now()}`, user: 'LLM', text: accumulatedText, timestamp: getTimeStr() }
+          return {
+            ...tab,
+            messages: [...messagesWithoutLoadingMsg, llmMsg],
+            fnCalls: [...tab.fnCalls, ...fnCalls], // Ensure fnCalls is merged properly
+            chatHistory: newChatHistory,
+          }
+        })
+      )
+
       // Fetch tuners once the full message is received
       const newTuners = await fetchTuners(newChatHistory, prevTuners)
       setPrevTuners(tuners)
