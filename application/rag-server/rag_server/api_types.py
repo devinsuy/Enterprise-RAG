@@ -81,8 +81,8 @@ class SelfQueryApi(str, Enum):
 class ConfigParams(BaseModel):
     # Bedrock parameters
     top_p: Optional[float] = 0.9
-    top_k: Optional[int] = 40
-    temperature: Optional[float] = 0.1
+    top_k: Optional[int] = 2
+    temperature: Optional[float] = 0.5
     max_tokens: Optional[int] = 3000
     system_prompt: Optional[str] = baseline_sys_prompt
 
