@@ -46,6 +46,7 @@ export interface ChatHistoryResponse {
 }
 
 export interface ChatMessage {
+  id: string
   user: string
   text: string
   timestamp: string

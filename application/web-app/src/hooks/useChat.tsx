@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, type ReactNode, type FC } from 'react'
 import { type ChatHistoryResponse, type LLMMessage, type ChatMessage, type PromptFnCalls } from '../types'
-import axios from 'axios'
 import { API_ENDPOINTS, API_KEY } from 'config'
 
 interface ChatTab {
@@ -29,36 +28,30 @@ interface ChatProviderProps {
 const getTimeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
 const parseText = (text: string): string => {
-  // Create a DOM parser
   const parser = new DOMParser()
-  // Wrap the input text with a root element to ensure it's well-formed XML
   const doc = parser.parseFromString(`<root>${text}</root>`, 'text/xml')
-
-  // Extract the content from the <result> tag, if it exists
   const resultElement = doc.querySelector('result')
   if (resultElement) {
     return resultElement.textContent ?? ''
   }
-
-  // If no <result> tag, remove all other tags and return the main content
   return text.replace(/<[^>]*>[^<]*<\/[^>]*>/g, '').replace(/<[^>]*\/>/g, '')
 }
 
 const fetchTuners = async (chatHistory: any, previousTuners: string[] | null): Promise<string[] | null> => {
   try {
-    const response: ChatHistoryResponse = await axios.post(
-      API_ENDPOINTS.tuners,
-      {
-        existing_chat_history: chatHistory,
-        previous_tuners: previousTuners ?? []
+    const response = await fetch(API_ENDPOINTS.tuners, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: API_KEY,
       },
-      {
-        headers: {
-          Authorization: API_KEY,
-        },
-      }
-    )
-    const { llm_response_text: llmResponseText } = response.data
+      body: JSON.stringify({
+        existing_chat_history: chatHistory,
+        previous_tuners: previousTuners ?? [],
+      }),
+    })
+    const data: ChatHistoryResponse = await response.json()
+    const { llm_response_text: llmResponseText } = data.data
     console.log(`Generated dynamic tuners: ${llmResponseText}`)
     return llmResponseText.split(',').slice(0, 8)
   } catch (error) {
@@ -78,68 +71,126 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
     setPrevTuners(tuners)
     setTuners(null) // Reset tuners, null state to indicate loading
 
-    const newMessage: ChatMessage = { user: 'User', text, timestamp: getTimeStr() }
+    const newMessage = { id: `msg-${Date.now()}`, user: 'User', text, timestamp: getTimeStr() }
     setTabs(prevTabs =>
-      prevTabs.map(tab =>
-        tab.id === activeTab ? { ...tab, messages: [...tab.messages, newMessage] } : tab
-      )
+      prevTabs.map(tab => (tab.id === activeTab ? { ...tab, messages: [...tab.messages, newMessage] } : tab))
     )
 
     setLoading(true)
 
     // Temporarily add a loading message
-    const loadingMessage: ChatMessage = { user: 'LLM', text: 'Loading...', timestamp: '' }
+    const loadingMessageId = `loading-${Date.now()}`
+    const loadingMessage = { id: loadingMessageId, user: 'LLM', text: '', timestamp: '' }
     setTabs(prevTabs =>
-      prevTabs.map(tab =>
-        tab.id === activeTab ? { ...tab, messages: [...tab.messages, loadingMessage] } : tab
-      )
+      prevTabs.map(tab => (tab.id === activeTab ? { ...tab, messages: [...tab.messages, loadingMessage] } : tab))
     )
 
     try {
-      const response: ChatHistoryResponse = await axios.post(
-        API_ENDPOINTS.chat,
-        {
-          existing_chat_history: tabs[activeTab].chatHistory,
-          prompt: text,
+      const response = await fetch(`${API_ENDPOINTS.chat}/stream?api_key=${API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            Authorization: API_KEY,
-          },
+        body: JSON.stringify({ prompt: text, existing_chat_history: tabs[activeTab].chatHistory }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      if (!response.body) {
+        throw new Error(`Got null response body: ${JSON.stringify(response)}`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let accumulatedText = ''
+
+      const processChunk = (chunk: any) => {
+        const newAccumulatedText = accumulatedText + (chunk.text as string)
+        accumulatedText = newAccumulatedText // update outer accumulatedText
+        const timestamp = getTimeStr()
+
+        setTabs(prevTabs =>
+          prevTabs.map(tab => {
+            if (tab.id !== activeTab) return tab
+            const updatedMessages = tab.messages.map(msg => {
+              if (msg.id === loadingMessageId) {
+                return { ...msg, text: newAccumulatedText, timestamp }
+              }
+              return msg
+            })
+            return {
+              ...tab,
+              messages: updatedMessages,
+            }
+          })
+        )
+      }
+
+      let newChatHistory: LLMMessage[] = []
+      let fnCalls: PromptFnCalls[] = []
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        console.log(`CHUNK IS: ${JSON.stringify(buffer)}`)
+        console.log('================================')
+        const lines = buffer.split('\n')
+
+        for (let i = 0; i < lines.length - 1; i++) {
+          let line = lines[i].trim()
+          if (line.startsWith('data: ')) {
+            line = line.slice(6).trim()
+            if (line === '[DONE]') {
+              break
+            }
+            if (line) {
+              try {
+                const parsedData = JSON.parse(line)
+                if (parsedData.error) {
+                  throw new Error(parsedData.error)
+                }
+                const { delta } = parsedData
+                if (delta?.text) {
+                  processChunk(delta)
+                }
+                if (parsedData.new_chat_history) {
+                  newChatHistory = parsedData.new_chat_history
+                }
+                if (parsedData.fn_calls) {
+                  fnCalls = parsedData.fn_calls
+                }
+              } catch (e) {
+                setLoading(false)
+                console.error('Error parsing chunk:', e)
+                const errorMessage = { id: `error-${Date.now()}`, user: 'System', text: 'An error occurred. Please try sending your message again.', timestamp: getTimeStr() }
+                setTabs(prevTabs =>
+                  prevTabs.map(tab =>
+                    tab.id === activeTab ? { ...tab, messages: [...tab.messages.filter((msg) => msg.id !== loadingMessageId), errorMessage] } : tab
+                  )
+                )
+                return // Exit the function after handling the error
+              }
+            }
+          }
         }
-      )
-
-      const { new_chat_history: newChatHistory, llm_response_text: llmResponseText, fn_calls: fnCalls } = response.data
-      const parsedResponseText = parseText(llmResponseText)
-      const llmMsg = { user: 'LLM', text: parsedResponseText, timestamp: getTimeStr() }
-
-      // We got a response from LLM successfully, use it to generate new tuners
+        buffer = lines[lines.length - 1] // Keep the last line if it's partial
+      }
+      // Fetch tuners once the full message is received
       const newTuners = await fetchTuners(newChatHistory, prevTuners)
       setPrevTuners(tuners)
       setTuners(newTuners)
-
-      // Update the current tab with the new messages and chat history
-      setTabs(prevTabs =>
-        prevTabs.map(tab => {
-          if (tab.id !== activeTab) return tab
-          const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.text !== 'Loading...')
-          return {
-            ...tab,
-            messages: [...messagesWithoutLoadingMsg, llmMsg],
-            fnCalls: [...tab.fnCalls, fnCalls],
-            chatHistory: newChatHistory
-          }
-        })
-      )
     } catch (error) {
       setTuners(prevTuners) // Restore tuners
       setPrevTuners(null)
-
       console.error('Error sending message:', error)
-      const errorMessage: ChatMessage = { user: 'System', text: 'Error sending message. Please try again.', timestamp: getTimeStr() }
+      const errorMessage = { id: `error-${Date.now()}`, user: 'System', text: 'An error occurred. Please try sending your message again.', timestamp: getTimeStr() }
       setTabs(prevTabs =>
         prevTabs.map(tab =>
-          tab.id === activeTab ? { ...tab, messages: [...tab.messages.filter((msg) => msg.text !== 'Loading...'), errorMessage] } : tab
+          tab.id === activeTab ? { ...tab, messages: [...tab.messages.filter((msg) => msg.id !== loadingMessageId), errorMessage] } : tab
         )
       )
     } finally {

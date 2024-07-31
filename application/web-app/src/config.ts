@@ -1,7 +1,8 @@
-// export const HOST = 'http://localhost:8000'
-export const HOST = 'https://api.scraps2scrumptious.com'
+export const HOST = 'http://localhost:8000'
+// export const HOST = 'https://api.scraps2scrumptious.com'
 export const API_ENDPOINTS = {
   chat: `${HOST}/v1/chat`,
+  chatStream: `${HOST}/v1/chat/stream`,
   tuners: `${HOST}/v1/prompt/tuners`
 }
 // TODO: strip this out before repo is made public
