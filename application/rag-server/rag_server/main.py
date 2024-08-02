@@ -6,11 +6,13 @@ from asyncio import Semaphore
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from traceback import format_exc
+from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security.api_key import APIKeyHeader
+from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader, APIKeyQuery
 from pydantic import ValidationError
 
 from api_types import (ChatHistoryResponse, ChatRequest, CoarseSearchType,
@@ -20,7 +22,8 @@ from api_types import (ChatHistoryResponse, ChatRequest, CoarseSearchType,
 from constants import BUCKET_NAME_TESTING
 from data_utils import (handle_vector_db_queries, initialize_vector_db,
                         upload_to_s3)
-from llm.llm_handler import message_handler, run_chat_loop
+from llm.llm_handler import (message_handler, run_chat_loop,
+                             run_chat_loop_streaming)
 from llm.prompts import dynamic_prompt_tuners
 from retrieval_utils import initialize_retrieval_chain, intialize_reranker
 from test_queries import gate_keeper_queries, test_queries
@@ -70,7 +73,11 @@ API_KEY = os.getenv("API_KEY")
 # We would never do this in a real server, but it's convenient in debugging for now
 logger.info(f"Server is configured to expect API key: {API_KEY}")
 
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+
+# Server accepts both Authorization header or api key query param
+# query param support is for enabling streamed requests
+api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
+api_key_query = APIKeyQuery(name="api_key", auto_error=False)
 
 
 # Dynamically determine doc retriever based on request
@@ -100,17 +107,20 @@ def get_retriever(config):
         return coarse_retriever
 
 
-async def get_api_key(request: Request, api_key_header: str = Depends(api_key_header)):
-    if api_key_header == API_KEY:
-        return api_key_header
+async def get_api_key(
+    api_key_header: str = Security(api_key_header),
+    api_key_query: str = Security(api_key_query),
+):
+    api_key = api_key_header or api_key_query
+    logger.info(
+        f"Received API key from header: {api_key_header}, query: {api_key_query}"
+    )
+    if api_key == API_KEY:
+        return api_key
     else:
-        headers = {k: v for k, v in request.headers.items()}
-        logger.warning(
-            f"Invalid API key: {api_key_header}. Received headers: {headers}"
-        )
         raise HTTPException(
-            status_code=403,
-            detail=f"Could not validate credentials, was the correct value passed for the {API_KEY_NAME} header? Received headers: {headers}",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
         )
 
 
@@ -155,6 +165,27 @@ async def generate_prompt_tuners(
     except Exception as e:
         logger.error(f"Unexpected error: {e}\n{format_exc()}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/v1/chat/stream")
+async def stream_chat(request: ChatRequest, api_key: str = Depends(get_api_key)):
+    logger.info("Received stream_chat request with prompt: %s", request.prompt)
+    doc_retriever = get_retriever(request.config)
+    chat_history_as_dicts = [
+        message.model_dump() for message in request.existing_chat_history
+    ]
+
+    def event_stream():
+        try:
+            for chunk in run_chat_loop_streaming(
+                chat_history_as_dicts, request.prompt, doc_retriever, request.config
+            ):
+                yield f"data: {json.dumps(chunk)}\n\n"
+        except Exception as e:
+            logger.error("Error in event_stream: %s", e)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/v1/chat")

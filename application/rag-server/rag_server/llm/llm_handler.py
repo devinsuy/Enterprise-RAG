@@ -3,14 +3,20 @@ import logging
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
+from api_types import ConverseToolResultStatus
 from constants import MODEL_ID
 from data_utils import format_docs, get_secret, handle_vector_db_queries
 from google_search import handle_google_web_search
 
-from .message_utils import generate_message, generate_tool_message
-from .tools import google_web_search_tool, recipe_db_query_tool
+from .message_utils import (generate_converse_message,
+                            generate_converse_tool_message, generate_message,
+                            generate_tool_message)
+from .tools import (converse_google_web_search_tool,
+                    converse_recipe_db_query_tool, google_web_search_tool,
+                    recipe_db_query_tool)
 
 # Ensure AWS creds always load before bedrock client is instantiated
 load_dotenv()
@@ -220,3 +226,177 @@ def run_chat_loop(existing_chat_history, prompt, document_retriever, config):
     logger.info(f"\n[Model]: {model_text_output}")
 
     return [model_text_output, chat_history, fn_calls]
+
+
+# https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-examples.html
+def converse_msg_stream_handler(messages, config):
+    response = bedrock_client.converse_stream(
+        modelId=MODEL_ID,
+        messages=messages,
+        system=[{"text": str(config.system_prompt)}],
+        inferenceConfig={
+            "temperature": float(config.temperature),
+            "topP": float(config.top_p),
+            "maxTokens": int(config.max_tokens),
+        },
+        additionalModelRequestFields={"top_k": int(config.top_k)},
+        toolConfig={
+            "tools": [converse_recipe_db_query_tool, converse_google_web_search_tool]
+        },
+    )
+
+    stop_reason = ""
+    message = {"role": "assistant", "content": []}
+    text = ""
+    tool_use = {}
+
+    for chunk in response["stream"]:
+        if "messageStart" in chunk:
+            message["role"] = chunk["messageStart"]["role"]
+        elif "contentBlockStart" in chunk:
+            tool = chunk["contentBlockStart"]["start"]["toolUse"]
+            tool_use = {"toolUseId": tool["toolUseId"], "name": tool["name"]}
+        elif "contentBlockDelta" in chunk:
+            delta = chunk["contentBlockDelta"]["delta"]
+            if "toolUse" in delta:
+                if "input" not in tool_use:
+                    tool_use["input"] = ""
+                tool_use["input"] += delta["toolUse"]["input"]
+            elif "text" in delta:
+                text += delta["text"]
+                yield None, {"role": "assistant", "content": [{"text": text}]}
+        elif "contentBlockStop" in chunk:
+            if "input" in tool_use:
+                tool_use["input"] = json.loads(tool_use["input"])
+                message["content"].append({"toolUse": tool_use})
+                tool_use = {}
+            else:
+                message["content"].append({"text": text})
+                text = ""
+        elif "messageStop" in chunk:
+            stop_reason = chunk["messageStop"]["stopReason"]
+
+    yield stop_reason, message
+
+
+# Messages are created for each accumulated version streamed from the model,
+# strip them out and only keep the final completed message
+def dedupe_streamed_messages(messages):
+    # Check if messages never repeat the same role more than once before alternating
+    repeated_role = False
+    for i in range(1, len(messages)):
+        if messages[i]["role"] == messages[i - 1]["role"]:
+            repeated_role = True
+            break
+
+    # If no repeated roles, return messages as is
+    if not repeated_role:
+        return messages
+
+    # Process messages to strip out redundant assistant messages
+    processed_messages = []
+    last_assistant_message = None
+
+    for message in messages:
+        if message["role"] == "assistant":
+            last_assistant_message = message
+        else:
+            if last_assistant_message:
+                processed_messages.append(last_assistant_message)
+                last_assistant_message = None
+            processed_messages.append(message)
+
+    # Append the last assistant message if exists
+    if last_assistant_message:
+        processed_messages.append(last_assistant_message)
+
+    return processed_messages
+
+
+def run_chat_loop_streaming(existing_chat_history, prompt, document_retriever, config):
+    try:
+        messages = existing_chat_history
+        messages.append(generate_converse_message(prompt))
+
+        accumulated_text = ""
+        for stop_reason, message in converse_msg_stream_handler(messages, config):
+            if message:
+                if message["content"] and "text" in message["content"][-1]:
+                    accumulated_text += message["content"][-1]["text"]
+                messages.append(message)
+                yield message
+
+            while stop_reason == "tool_use":
+                for content in message["content"]:
+                    if "toolUse" not in content:
+                        continue
+
+                    tool_use = content["toolUse"]
+                    fn_id = tool_use["toolUseId"]
+                    fn_name = tool_use["name"]
+                    fn_args = tool_use["input"]
+                    fn_result = {"toolUseId": fn_id}
+
+                    if fn_name == "query_food_recipe_vector_db":
+                        if "queries" not in fn_args:
+                            logger.error(
+                                f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping..."
+                            )
+                            fn_result["content"] = []
+                            fn_result["status"] = "error"
+                            continue
+
+                        logger.info(f"Model called {fn_name} with args {fn_args}")
+                        context_docs = handle_vector_db_queries(
+                            fn_args["queries"], document_retriever
+                        )
+                        context_str = format_docs(context_docs)
+                        fn_result["content"] = [{"text": context_str}]
+                        fn_result["status"] = "success"
+
+                    elif fn_name == "google_web_search":
+                        if "queries" not in fn_args:
+                            logger.error(
+                                f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping..."
+                            )
+                            fn_result["content"] = []
+                            fn_result["status"] = "error"
+                            continue
+
+                        logger.info(f"Model called {fn_name} with args {fn_args}")
+
+                        search_results = handle_google_web_search(
+                            fn_args["queries"], google_search_api_key
+                        )
+                        search_results_str = json.dumps(search_results)
+                        fn_result["content"] = [{"text": search_results_str}]
+                        fn_result["status"] = "success"
+
+                    else:
+                        logger.error(
+                            f"ERROR: Attempted call to unknown function {fn_name}"
+                        )
+                        fn_result["content"] = []
+                        fn_result["status"] = "error"
+
+                    tool_result_message = generate_converse_tool_message(fn_result)
+                    messages.append(tool_result_message)
+
+                # Sanitize messages before sending
+                messages = dedupe_streamed_messages(messages)
+
+                for stop_reason, message in converse_msg_stream_handler(
+                    messages, config
+                ):
+                    if message:
+                        if message["content"] and "text" in message["content"][-1]:
+                            accumulated_text += message["content"][-1]["text"]
+                        messages.append(message)
+                        yield message
+    except ClientError as err:
+        message = err.response["Error"]["Message"]
+        logger.error("A client error occurred: %s", message)
+        yield {"error": str(message)}
+
+    else:
+        logger.info(f"Successfully finished streaming results for request: {prompt}")

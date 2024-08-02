@@ -1,52 +1,90 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Container, Card, CardContent, Grid, Link } from '@mui/material'
+
+const surveyLinkUrl = 'https://berkeley.qualtrics.com/jfe/form/SV_8CzqCn6sJ8kCyPQ'
 
 export const About: React.FC = () => {
   return (
-    <Box
-      sx={{
-        padding: '40px',
-        height: '100vh',
-        justifyContent: 'center',
-        maxWidth: '90%'
-      }}
-    >
-      <Typography variant="h5" component="h2" gutterBottom sx={{ paddingBottom: '5px' }}>
-        <strong>About Us</strong>
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        Welcome to Scraps2Scrumptious, a web application that tailor makes culinary recipes to one&rsquo;s unique palette and kitchen! Whether you&rsquo;re a professional chef, a home cook, or someone who hasn&rsquo;t gone to the grocery store in a while, Scraps2Scrumptious is here to inspire and guide you to making a delicious dish.
-      </Typography>
+    <Container maxWidth="lg" sx={{ paddingTop: '40px', paddingBottom: '40px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          marginBottom: '40px',
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          <strong>About Us</strong>
+        </Typography>
+        <Typography variant="body1" paragraph sx={{ maxWidth: '90%' }}>
+          Welcome to Scraps2Scrumptious, your personalized culinary assistant. Our platform transforms your available ingredients into delectable, tailored recipes, reducing food waste and enhancing your cooking experience. Whether you are a seasoned chef, a home cook, or someone with limited groceries, Scraps2Scrumptious is designed to inspire and guide you in creating mouthwatering dishes.
+        </Typography>
+      </Box>
 
-      <Typography variant="h5" component="h2" gutterBottom sx={{ paddingBottom: '5px' }}>
-        <strong>Our Mission</strong>
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        At Scraps2Scrumptious, we believe that everyone should have the opportunity to enjoy delicious, homemade meals without the stress of scrolling through dozens of recipes online. Our mission is to simplify the cooking experience by leveraging the power of AI to generate personalized recipes that cater to your unique tastes and dietary needs.
-      </Typography>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom>
+                <strong>Our Mission</strong>
+              </Typography>
+              <Typography variant="body1" paragraph>
+                At Scraps2Scrumptious, our mission is to make delicious, homemade meals accessible to everyone without the hassle of browsing endless recipes online. By harnessing the power of AI, we generate personalized recipes that meet your unique tastes and dietary requirements, making the cooking process simpler and more enjoyable.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <Typography variant="h5" component="h2" gutterBottom sx={{ paddingBottom: '5px' }}>
-        <strong>How it works</strong>
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        Scraps2Scrumptious utilizes state-of-the-art Retrieval-Augmented Generation (RAG) technology to craft custom recipes based on your specific queries. Whether you&apos;re searching for a vegetarian dish, a low-carb meal, or an Asian fusion recipe, our AI-powered platform retrieves and combines the best elements from a vast database of 500,000+ recipes to create a unique culinary experience just for you.
-      </Typography>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom>
+                <strong>How It Works</strong>
+              </Typography>
+              <Typography variant="body1" paragraph>
+                Scraps2Scrumptious uses advanced Retrieval-Augmented Generation (RAG) technology to create customized recipes based on your input. Whether you&apos;re looking for a vegetarian meal, a low-carb option, or a fusion dish, our AI-driven platform searches through a vast database of over 500,000 recipes to deliver a unique culinary experience tailored just for you.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      <Typography variant="h5" component="h2" gutterBottom sx={{ paddingBottom: '5px' }}>
-        <strong>How to use Scraps2Scrumptious</strong>
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        1. <strong>Start Chatting:</strong> Enter your preferences, ingredients, or any specific dish you have in mind.
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        2. <strong>AI Generation:</strong> Our advanced RAG system goes to work, retrieving relevant information from a comprehensive recipe database and generating a customized recipe tailored to your input.
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        3. <strong>Make it Personal:</strong> Don&rsquo;t like tomatoes in your sandwich? Don&rsquo;t have cumin at home? Just enter that in the chat box or tell our algorithm what you&rsquo;re thinking! It will generate a new recipe that will remove that ingredient or even substitute it.
-      </Typography>
-      <Typography variant="body1" paragraph sx={{ paddingBottom: '15px' }}>
-        4. <strong>Enjoy Cooking:</strong> Follow the step-by-step instructions provided by Scraps2Scrumptious and enjoy a delightful meal designed to suit your tastes and dietary preferences.
-      </Typography>
-    </Box>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="h2" gutterBottom>
+                <strong>How to Use Scraps2Scrumptious</strong>
+              </Typography>
+              <Typography variant="body1" paragraph>
+                1. <strong>Start Chatting:</strong> Share your preferences, ingredients, or any specific dish you have in mind with our AI.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                2. <strong>AI Generation:</strong> Our RAG system gets to work, retrieving relevant recipes from our extensive database and generating a personalized recipe just for you.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                3. <strong>Customize Further:</strong> If you dislike certain ingredients or are missing some, simply let our AI know. It will adjust the recipe by removing or substituting those ingredients.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                4. <strong>Click Dynamic Tuners:</strong> Easily refine your recipes further by clicking on dynamic tuners that appear during your chat, offering you suggestions to fine-tune the recipe based on your evolving needs and preferences.
+              </Typography>
+              <Typography variant="body1" paragraph>
+                5. <strong>Enjoy Cooking:</strong> Follow the step-by-step instructions provided by Scraps2Scrumptious and savor a meal perfectly suited to your tastes and dietary needs.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="body1" paragraph>
+                Discover the future of personalized cooking with Scraps2Scrumptious. Your feedback is invaluable to us, so please take a moment to complete <Link href={surveyLinkUrl} target="_blank" rel="noopener noreferrer" sx={{ color: '#0000EE' }}>our survey</Link> after trying the app. Enjoy your culinary journey with us!
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   )
 }
