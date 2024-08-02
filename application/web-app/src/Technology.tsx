@@ -121,16 +121,6 @@ export const Technology: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="body1" paragraph>
-                Explore Scraps2Scrumptious and discover the future of personalized cooking. Your feedback is invaluable to us, so please take a moment to complete <Link href={surveyLinkUrl} target="_blank" rel="noopener noreferrer" sx={{ color: '#0000EE' }}>our survey</Link> after trying the app. Enjoy your culinary journey with us!
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
     </Container>
   )

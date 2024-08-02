@@ -16,12 +16,13 @@ export const InfoPanel = ({ open, onClose }: InfoPanelProps) => {
         </IconButton>
         <Typography variant="h6">How to Use</Typography>
         <Typography variant="body1" paragraph>
-          Welcome to Scraps2Scrumptious! Here’s how you can use our application to get the most out of your culinary experience:
+          Welcome to Scraps2Scrumptious! Here&apos;s how you can make the most of your culinary experience with our application:
           <ol>
-            <li><strong>Input Your Query:</strong> Start by entering your preferences, ingredients, or any specific dish you have in mind.</li>
-            <li><strong>AI Generation:</strong> Our advanced RAG system retrieves relevant information from a comprehensive recipe database and generates a customized recipe tailored to your input.</li>
-            <li><strong>Fine Tuning:</strong> If you don’t like certain ingredients or don’t have them at home, enter that in the chat box. Our algorithm will adjust the recipe accordingly.</li>
-            <li><strong>Enjoy Cooking:</strong> Follow the step-by-step instructions provided and enjoy your delicious meal!</li>
+            <li><strong>Start Your Query:</strong> Begin by entering your preferences, available ingredients, or a specific dish you want to prepare.</li>
+            <li><strong>AI Recipe Generation:</strong> Our advanced RAG system will search through our extensive recipe database and generate a personalized recipe based on your input.</li>
+            <li><strong>Customize Your Recipe:</strong> If you prefer to exclude certain ingredients or if you don&apos;t have some items at home, simply update your query. Our algorithm will adjust the recipe accordingly.</li>
+            <li><strong>Use Dynamic Tuners:</strong> Click on the dynamic tuners that appear during your chat to further refine the recipe to your liking.</li>
+            <li><strong>Enjoy Your Meal:</strong> Follow the detailed, step-by-step instructions provided and savor your customized culinary creation!</li>
           </ol>
         </Typography>
       </div>
