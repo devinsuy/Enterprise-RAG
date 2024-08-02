@@ -16,10 +16,10 @@ export const ChatContainer: React.FC = () => (
     padding: 2,
     borderRadius: 2,
     boxShadow: 1,
-    minHeight: '65%',
-    maxHeight: '65%',
+    minHeight: '75%',
+    maxHeight: '75%',
     width: '100%',
-    maxWidth: '45%',
+    maxWidth: '60%',
     justifyContent: 'center'
   }}>
     <MessageList />
