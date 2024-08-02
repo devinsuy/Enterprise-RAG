@@ -17,6 +17,7 @@ export const AppBar: React.FC = () => {
           <Tab label="Chat" component={Link} to="/" />
           <Tab label="About Us" component={Link} to="/about" />
           <Tab label="Team" component={Link} to="/team" />
+          <Tab label="Technology" component={Link} to="/technology" />
         </Box>
         {window.location.pathname === '/' && <Tabs value={activeTab} onChange={(e, newValue) => { switchTab(newValue) }}>
           {tabs.map((tab) => (
