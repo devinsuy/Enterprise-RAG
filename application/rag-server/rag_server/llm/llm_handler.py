@@ -3,14 +3,20 @@ import logging
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
+from api_types import ConverseToolResultStatus
 from constants import MODEL_ID
 from data_utils import format_docs, get_secret, handle_vector_db_queries
 from google_search import handle_google_web_search
 
-from .message_utils import generate_message, generate_tool_message
-from .tools import google_web_search_tool, recipe_db_query_tool
+from .message_utils import (generate_converse_message,
+                            generate_converse_tool_message, generate_message,
+                            generate_tool_message)
+from .tools import (converse_google_web_search_tool,
+                    converse_recipe_db_query_tool, google_web_search_tool,
+                    recipe_db_query_tool)
 
 # Ensure AWS creds always load before bedrock client is instantiated
 load_dotenv()
@@ -46,26 +52,6 @@ def query_bedrock_llm(messages, config):
     response_body = json.loads(response.get("body").read())
     return response_body
 
-
-def query_bedrock_llm_streaming(messages, config):
-    payload = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": messages,
-        "tools": [recipe_db_query_tool, google_web_search_tool],
-        "system": str(config.system_prompt),
-        "max_tokens": int(config.max_tokens),
-        "temperature": float(config.temperature),
-        "top_p": float(config.top_p),
-        "top_k": int(config.top_k),
-    }
-    logger.info("Query payload: %s", payload)
-    response = bedrock_client.invoke_model_with_response_stream(
-        modelId=MODEL_ID,
-        body=json.dumps(payload),
-    )
-    logger.info("Received response from Bedrock")
-    logger.info(response['body'])
-    return response["body"]
 
 """
 Example response body structure:
@@ -241,72 +227,151 @@ def run_chat_loop(existing_chat_history, prompt, document_retriever, config):
 
     return [model_text_output, chat_history, fn_calls]
 
-def run_chat_loop_streaming(existing_chat_history, prompt, document_retriever, config):
-    logger.info(f"[User]: {prompt}")
 
-    messages = existing_chat_history
-    messages.append(generate_message(prompt))
-    logger.info("Messages are now: %s", messages)
+# https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-examples.html
+# https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-examples.html
+def converse_msg_stream_handler(messages, config):
+    """
+    Sends a message to a model and streams the response.
+    Args:
+        messages (JSON) : The messages to send to the model.
+        config: config overrides
+    Returns:
+        stop_reason (str): The reason why the model stopped generating text.
+        message (JSON): The message that the model generated.
 
-    response_stream = query_bedrock_llm_streaming(messages, config)
-    logger.info("Received response stream")
+    """
+    print(f"invoking bedrock stream with messages: {messages}")
 
-    accumulated_response = ""
-    fn_calls = []
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html
+    response = bedrock_client.converse_stream(
+        modelId=MODEL_ID,
+        messages=messages,
+        system=[{"text": str(config.system_prompt)}],
+        inferenceConfig={
+            "temperature": float(config.temperature),
+            "topP": float(config.top_p),
+            "maxTokens": int(config.max_tokens),
+        },
+        additionalModelRequestFields={"top_k": int(config.top_k)},
+        toolConfig={
+            "tools": [converse_recipe_db_query_tool, converse_google_web_search_tool]
+        },
+    )
 
-    for chunk in response_stream:
-        logger.info("Processing chunk: %s", chunk)
-        
-        # Extract bytes from the nested dictionary
-        if 'chunk' in chunk and 'bytes' in chunk['chunk']:
-            chunk_bytes = chunk['chunk']['bytes']
-            chunk_str = chunk_bytes.decode('utf-8')
-        else:
-            logger.warning("Skipping non-string/byte chunk")
-            continue  # Skip if chunk is neither bytes nor string
+    stop_reason = ""
 
-        accumulated_response += chunk_str
-        try:
-            response_body = json.loads(accumulated_response)
-            logger.info("Parsed response body: %s", response_body)
-            
-            # Handle different types of responses
-            if 'type' in response_body and response_body['type'] == 'message_start':
-                yield f"data: {json.dumps(response_body)}\n\n"
-                accumulated_response = ""  # Reset after processing
+    message = {}
+    content = []
+    message["content"] = content
+    text = ""
+    tool_use = {}
 
-            elif 'type' in response_body and response_body['type'] == 'message_delta':
-                yield f"data: {json.dumps(response_body)}\n\n"
-                accumulated_response = ""  # Reset after processing
-
-            elif 'type' in response_body and response_body['type'] == 'message_stop':
-                yield f"data: {json.dumps(response_body)}\n\n"
-                accumulated_response = ""  # Reset after processing
-
-            elif 'stop_reason' in response_body and response_body["stop_reason"] == "tool_use":
-                fn_calls.extend(response_body["content"])
-                fn_results = handle_function_calls(
-                    tool_call_message_content=response_body["content"],
-                    document_retriever=document_retriever,
-                )
-
-                response_body, llm_message, messages = message_handler(
-                    existing_chat_history=messages,
-                    prompt=fn_results,
-                    is_tool_message=True,
-                    config=config,
-                )
-                accumulated_response = ""  # Reset after processing
-                yield f"data: {json.dumps(response_body)}\n\n"
-                
+    # stream the response into a message.
+    for chunk in response["stream"]:
+        if "messageStart" in chunk:
+            message["role"] = chunk["messageStart"]["role"]
+        elif "contentBlockStart" in chunk:
+            tool = chunk["contentBlockStart"]["start"]["toolUse"]
+            tool_use["toolUseId"] = tool["toolUseId"]
+            tool_use["name"] = tool["name"]
+        elif "contentBlockDelta" in chunk:
+            delta = chunk["contentBlockDelta"]["delta"]
+            if "toolUse" in delta:
+                if "input" not in tool_use:
+                    tool_use["input"] = ""
+                tool_use["input"] += delta["toolUse"]["input"]
+            elif "text" in delta:
+                text += delta["text"]
+                print(delta["text"], end="")
+        elif "contentBlockStop" in chunk:
+            if "input" in tool_use:
+                tool_use["input"] = json.loads(tool_use["input"])
+                content.append({"toolUse": tool_use})
+                tool_use = {}
             else:
-                yield f"data: {json.dumps(response_body)}\n\n"
-                accumulated_response = ""  # Reset after processing
+                content.append({"text": text})
+                text = ""
 
-        except json.JSONDecodeError:
-            logger.warning("JSONDecodeError, waiting for more chunks")
-            # Wait for more chunks to form a complete JSON
-            continue
-        except Exception as e:
-            logger.error("Unexpected error: %s", e)
-            raise
+        elif "messageStop" in chunk:
+            stop_reason = chunk["messageStop"]["stopReason"]
+
+    return stop_reason, message
+
+
+def run_chat_loop_streaming(existing_chat_history, prompt, document_retriever, config):
+    try:
+        messages = existing_chat_history
+        messages.append(generate_converse_message(prompt))
+
+        # Send the message and get the tool use request from response
+        stop_reason, message = converse_msg_stream_handler(messages, config)
+        messages.append(message)
+
+        while stop_reason == "tool_use":
+            # Assumes that there may be more than 1 message, but at most 1 tool call message
+            for content in message["content"]:
+                if "toolUse" not in content:  # Skip non tool use messages
+                    continue
+
+                # Process each tool call and generate output
+                tool_use = content["toolUse"]
+                fn_id = tool_use["toolUseId"]
+                fn_name = tool_use["name"]
+                fn_args = tool_use["input"]
+                fn_result = {"toolUseId": fn_id}
+
+                if fn_name == "query_food_recipe_vector_db":
+                    if "queries" not in fn_args:
+                        logger.error(
+                            f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping..."
+                        )
+                        fn_result["content"] = []
+                        fn_result["status"] = "error"
+                        continue
+
+                    logger.info(f"Model called {fn_name} with args {fn_args}")
+                    context_docs = handle_vector_db_queries(
+                        fn_args["queries"], document_retriever
+                    )
+                    context_str = format_docs(context_docs)
+                    fn_result["content"] = [{"text": context_str}]
+                    fn_result["status"] = "success"
+
+                elif fn_name == "google_web_search":
+                    if "queries" not in fn_args:
+                        logger.error(
+                            f"ERROR: Tried to call {fn_name} with invalid args {fn_args}, skipping..."
+                        )
+                        fn_result["content"] = []
+                        fn_result["status"] = "error"
+                        continue
+
+                    logger.info(f"Model called {fn_name} with args {fn_args}")
+                    search_results = handle_google_web_search(
+                        fn_args["queries"], google_search_api_key
+                    )
+                    search_results_str = json.dumps(search_results)
+                    fn_result["content"] = [{"text": search_results_str}]
+                    fn_result["status"] = "success"
+
+                else:
+                    logger.error(f"ERROR: Attempted call to unknown function {fn_name}")
+                    fn_result["content"] = []
+                    fn_result["status"] = "error"
+
+                # Add the tool result info to messages
+                tool_result_message = generate_converse_tool_message(fn_result)
+                messages.append(tool_result_message)
+
+            # Send the messages, including the tool result, to the model
+            stop_reason, message = converse_msg_stream_handler(messages, config)
+            messages.append(message)
+
+    except ClientError as err:
+        message = err.response["Error"]["Message"]
+        logger.error("A client error occurred: %s", message)
+        print("A client error occurred: " + format(message))
+
+    else:
+        print(f"\nFinished streaming messages with model.")

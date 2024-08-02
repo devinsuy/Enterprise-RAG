@@ -13,54 +13,6 @@ def default_config_params():
     return ConfigParams()
 
 
-class ToolUseInput(BaseModel):
-    queries: List[str]
-
-    class Config:
-        extra = "forbid"
-
-
-class ToolUseContent(BaseModel):
-    type: str
-    id: str
-    name: str
-    input: Any
-
-    class Config:
-        extra = "forbid"
-
-
-class ToolResultContent(BaseModel):
-    type: str
-    tool_use_id: str
-    content: str
-
-    class Config:
-        extra = "forbid"
-
-
-class TextContent(BaseModel):
-    type: str
-    text: str
-
-    class Config:
-        extra = "forbid"
-
-
-class Message(BaseModel):
-    role: str
-    content: List[Union[TextContent, ToolUseContent, ToolResultContent]]
-
-    @validator("role")
-    def validate_role(cls, value):
-        if value not in {"system", "user", "assistant"}:
-            raise ValueError("Role must be either 'system', 'user' or 'assistant'")
-        return value
-
-    class Config:
-        extra = "forbid"
-
-
 class DocRetreiver(str, Enum):
     coarse = "coarse"
     reranker = "reranker"
@@ -101,6 +53,104 @@ class ConfigParams(BaseModel):
 
     class Config:
         extra = "forbid"
+
+
+class ToolUseInput(BaseModel):
+    queries: List[str]
+
+    class Config:
+        extra = "forbid"
+
+
+class ToolUseContent(BaseModel):
+    type: str
+    id: str
+    name: str
+    input: Any
+
+    class Config:
+        extra = "forbid"
+
+
+class ToolResultContent(BaseModel):
+    type: str
+    tool_use_id: str
+    content: str
+
+    class Config:
+        extra = "forbid"
+
+
+class TextContent(BaseModel):
+    type: str
+    text: str
+
+    class Config:
+        extra = "forbid"
+
+
+class Role(str, Enum):
+    user = "user"
+    assistant = "assistant"
+
+
+class Message(BaseModel):
+    role: Role
+    content: List[Union[TextContent, ToolUseContent, ToolResultContent]]
+
+    @validator("role")
+    def validate_role(cls, value):
+        if value not in {"system", "user", "assistant"}:
+            raise ValueError("Role must be either 'system', 'user' or 'assistant'")
+        return value
+
+    class Config:
+        extra = "forbid"
+
+
+# ====================================================================================================
+# Bedrock ConverseStream uses a different message schema:
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html
+
+
+class ConverseTextContent(BaseModel):
+    text: str
+
+
+class ConverseToolUse(BaseModel):
+    toolUseId: str
+    name: str
+    input: Any
+
+
+class ConverseToolResultStatus(str, Enum):
+    success = "success"
+    error = "error"
+
+
+class ConverseToolResult(BaseModel):
+    toolUseId: str
+    content: List[ConverseTextContent]
+    status: ConverseToolResultStatus
+
+
+class ConverseMessage(BaseModel):
+    role: Role
+    content: List[Union[ConverseToolUse, ConverseToolResultStatus, ConverseToolResult]]
+
+
+class ConverseChatRequest(BaseModel):
+    # Any existing state from previous dialogue, or an empty list if this is the first prompt
+    existing_chat_history: List[ConverseMessage]
+    # This is always a user prompt to start or continue existing dialogue
+    prompt: str
+    config: ConfigParams = Field(default_factory=default_config_params)
+
+    class Config:
+        extra = "forbid"
+
+
+# ====================================================================================================
 
 
 class DynamicTunersRequest(BaseModel):

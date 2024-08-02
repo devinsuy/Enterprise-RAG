@@ -178,7 +178,9 @@ async def stream_chat(request: ChatRequest, api_key: str = Depends(get_api_key))
 
     def event_stream():
         try:
-            for chunk in run_chat_loop_streaming(chat_history_as_dicts, request.prompt, doc_retriever, request.config):
+            for chunk in run_chat_loop_streaming(
+                chat_history_as_dicts, request.prompt, doc_retriever, request.config
+            ):
                 logger.info("Yielding chunk: %s", chunk)
                 yield chunk
         except Exception as e:
