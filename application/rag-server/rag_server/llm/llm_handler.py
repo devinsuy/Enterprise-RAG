@@ -399,4 +399,4 @@ def run_chat_loop_streaming(existing_chat_history, prompt, document_retriever, c
         yield {"error": str(message)}
 
     else:
-        yield {"info": "Finished streaming messages with model."}
+        logger.info(f"Successfully finished streaming results for request: {prompt}")

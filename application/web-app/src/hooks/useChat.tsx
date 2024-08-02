@@ -104,11 +104,9 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let accumulatedText = ''
+      let lastProcessedText = ''
 
-      const processChunk = (chunk: any) => {
-        const newAccumulatedText = accumulatedText + (chunk.text as string)
-        accumulatedText = newAccumulatedText // update outer accumulatedText
+      const processChunk = (chunkContent: any) => {
         const timestamp = getTimeStr()
 
         setTabs(prevTabs =>
@@ -116,7 +114,14 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
             if (tab.id !== activeTab) return tab
             const updatedMessages = tab.messages.map(msg => {
               if (msg.id === loadingMessageId) {
-                return { ...msg, text: newAccumulatedText, timestamp }
+                if (chunkContent?.text?.trim() && chunkContent.text.length > msg.text.length) {
+                  lastProcessedText = chunkContent.text.trim()
+                  return { ...msg, text: lastProcessedText, timestamp }
+                }
+                if (chunkContent.toolUse) {
+                  const toolUseText = `Model is currently running ${chunkContent.toolUse.name} with search terms:\n${JSON.stringify(chunkContent.toolUse.input.queries, null, 4)}`
+                  return { ...msg, text: `${msg.text}\n\n${toolUseText}`, timestamp }
+                }
               }
               return msg
             })
@@ -136,8 +141,6 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        // console.log(`CHUNK IS: ${JSON.stringify(buffer)}`)
-        // console.log('================================')
         const lines = buffer.split('\n')
 
         for (let i = 0; i < lines.length - 1; i++) {
@@ -153,10 +156,14 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
                 if (parsedData.error) {
                   throw new Error(parsedData.error)
                 }
-                const { delta } = parsedData
-                if (delta?.text) {
-                  processChunk(delta)
+
+                const { role, content } = parsedData
+                if (role === 'assistant' && content) {
+                  content.forEach((entry: any) => {
+                    processChunk(entry)
+                  })
                 }
+
                 if (parsedData.new_chat_history) {
                   newChatHistory = parsedData.new_chat_history
                 }
@@ -180,12 +187,13 @@ export const ChatProvider: FC<ChatProviderProps> = ({ children }) => {
         buffer = lines[lines.length - 1] // Keep the last line if it's partial
       }
 
-      // Update the current tab with the full accumulated message
+      // Final update to ensure no valid message is wiped out
+      const finalText = buffer.trim() || lastProcessedText
       setTabs(prevTabs =>
         prevTabs.map(tab => {
           if (tab.id !== activeTab) return tab
           const messagesWithoutLoadingMsg = tab.messages.filter((msg) => msg.id !== loadingMessageId)
-          const llmMsg = { id: `msg-${Date.now()}`, user: 'LLM', text: accumulatedText, timestamp: getTimeStr() }
+          const llmMsg = { id: `msg-${Date.now()}`, user: 'LLM', text: finalText, timestamp: getTimeStr() }
           return {
             ...tab,
             messages: [...messagesWithoutLoadingMsg, llmMsg],
