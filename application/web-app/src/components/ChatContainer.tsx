@@ -16,8 +16,8 @@ export const ChatContainer: React.FC = () => (
     padding: 2,
     borderRadius: 2,
     boxShadow: 1,
-    minHeight: '75%',
-    maxHeight: '75%',
+    minHeight: '60%',
+    maxHeight: '60%',
     width: '100%',
     maxWidth: '60%',
     justifyContent: 'center'
