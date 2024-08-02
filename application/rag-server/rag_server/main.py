@@ -174,15 +174,13 @@ async def stream_chat(request: ChatRequest, api_key: str = Depends(get_api_key))
     chat_history_as_dicts = [
         message.model_dump() for message in request.existing_chat_history
     ]
-    logger.info("Chat history as dicts: %s", chat_history_as_dicts)
 
     def event_stream():
         try:
             for chunk in run_chat_loop_streaming(
                 chat_history_as_dicts, request.prompt, doc_retriever, request.config
             ):
-                logger.info("Yielding chunk: %s", chunk)
-                yield chunk
+                yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
             logger.error("Error in event_stream: %s", e)
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
