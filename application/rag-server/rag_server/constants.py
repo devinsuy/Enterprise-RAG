@@ -35,4 +35,4 @@ config_test_dict = {var: eval(var) for var in dir() if not var.startswith("__")}
 
 GCP_CSE_ID = "b20454e29b3b14095"
 NUM_SEARCH_RESULTS = "3"
-WEB_MAX_CONTENT_LENGTH = 5000
+WEB_MAX_CONTENT_LENGTH = 1000
