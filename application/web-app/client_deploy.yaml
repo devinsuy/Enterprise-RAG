@@ -1,0 +1,44 @@
+AppSettings:
+  Name: Enterprise-RAG
+  Repository: https://github.com/devinsuy/Enterprise-RAG
+  Platform: WEB
+  EnvironmentVariables: {}  # Add any environment variables here if necessary
+  EnableBranchAutoBuild: false
+  EnableBranchAutoDeletion: false
+  EnableBasicAuth: false
+  DefaultDomain: d3juqriobddbo7.amplifyapp.com
+  CustomRules:
+    - Source: "/<*>"
+      Target: "/index.html"
+      Status: "404-200"
+  BuildSpec: |
+    version: 1
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm install 16
+            - nvm use 16
+            - cd application/web-app
+        build:
+          commands:
+            - yarn install --frozen-lockfile
+            - yarn build
+      artifacts:
+        baseDirectory: application/web-app/build
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - application/web-app/node_modules/**/*
+
+Branches:
+  - Name: main
+    Stage: PRODUCTION
+    EnableAutoBuild: true
+    Framework: Web
+    EnvironmentVariables: {}  # Add any branch-specific environment variables here
+    EnableBasicAuth: false
+    TTL: "5"
+    EnablePerformanceMode: false
+    EnablePullRequestPreview: false

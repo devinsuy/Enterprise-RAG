@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for Scrumptious App Infrastructure
+
+Parameters:
+  KeyName:
+    Type: String
+    Default: "reson-mint"
+    Description: "Name of an existing EC2 KeyPair"
+
+Resources:
+  MyVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.31.0.0/16
+      Tags:
+        - Key: Name
+          Value: scrumptious-vpc
+
+  MySubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVpc
+      CidrBlock: 172.31.0.0/24
+      AvailabilityZone: us-east-1a
+
+  MySubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVpc
+      CidrBlock: 172.31.1.0/24
+      AvailabilityZone: us-east-1b
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and HTTPS traffic
+      VpcId: !Ref MyVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: g4dn.xlarge
+      KeyName: !Ref KeyName
+      ImageId: ami-0e75c12341bfb93e8
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          SubnetId: !Ref MySubnet1
+          GroupSet: [!Ref MySecurityGroup]
+      IamInstanceProfile: ScrumptiousEC2InstanceProfile
+      Tags:
+        - Key: Name
+          Value: food-rag
+
+  MyLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: scrumptious-app
+      Scheme: internet-facing
+      SecurityGroups: [!Ref MySecurityGroup]
+      Subnets:
+        - !Ref MySubnet1
+        - !Ref MySubnet2
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "60"
+
+  MyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref MyVpc
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+
+  MyListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MyTargetGroup
+      LoadBalancerArn: !Ref MyLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  MyRoute53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z000778412CKZ4JSXEMDP
+      Name: scraps2scrumptious.com
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt MyLoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt MyLoadBalancer.DNSName
+
+  MyCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: api.scraps2scrumptious.com
+      ValidationMethod: DNS
+
+  RecipesRagBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: recipes-rag
+      AccessControl: PublicRead
+      VersioningConfiguration:
+        Status: Enabled
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  TestApiResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: test-api-results
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  WebsiteURL:
+    Description: "URL of the website"
+    Value: !Sub "http://${MyLoadBalancer.DNSName}"
